@@ -1,69 +1,23 @@
-import Image from "next/image";
+"use client";
+
+import dynamic from "next/dynamic";
+import { useMemo, useState } from "react";
+import { Flower2, Search, SlidersHorizontal, Sparkles, TreePine, X } from "lucide-react";
+import MemorialModal from "@/components/ui/MemorialModal";
+
+const CemeteryScene = dynamic(() => import("@/components/3d/CemeteryScene"), { ssr: false, loading: () => <div className="scene-loading">Učitavanje memorijalnog parka...</div> });
+
+const memorials = [
+  { id: "1", name: "Milena Petrović", birthDate: "12. mart 1948.", deathDate: "04. jun 2021.", bio: "Učiteljica, baštovanka i tiha snaga naše porodice. Volela je jutarnju kafu, miris lipe i decu koja postavljaju mnogo pitanja.", x: -4, z: -2, isPet: false, timeline: [{ year: 1948, title: "Rođena u Beogradu", description: "Prvi dan proleća doneo je porodici Petrović najmlađu ćerku." }, { year: 1972, title: "Postala učiteljica", description: "Četrdeset generacija učenika nosilo je njenu dobrotu sa sobom." }, { year: 2021, title: "Ostaje sa nama", description: "Njene priče nastavljaju da žive u svakom školskom dvorištu." }], gifts: [{ id: "g1", giftType: "DIGITAL_CANDLE", activeUntil: "2030-01-01" }] },
+  { id: "2", name: "Vladimir Jovanović", birthDate: "03. oktobar 1939.", deathDate: "18. januar 2018.", bio: "Arhitekta čiji su mostovi povezivali više od obala. U svakoj liniji crteža tražio je ravnotežu i svetlo.", x: 2, z: -4, isPet: false, timeline: [{ year: 1964, title: "Diplomirao arhitekturu", description: "Počinje karijeru u gradskom birou za urbanizam." }, { year: 1989, title: "Mostovi za budućnost", description: "Njegov najvažniji projekat postaje novi gradski orijentir." }], gifts: [{ id: "g2", giftType: "FLOWER_BOUQUET", activeUntil: "2030-01-01" }] },
+  { id: "3", name: "Luna", birthDate: "2010.", deathDate: "2024.", bio: "Najmekše šape u kući i najbrži trk do kapije. Luna je sve dočekivala kao da se vraćamo posle dugog putovanja.", x: 5, z: 3, isPet: true, timeline: [{ year: 2010, title: "Stigla je Luna", description: "Mala, bela šapa koja je promenila ritam čitave kuće." }, { year: 2024, title: "Zauvek dobra devojka", description: "Njeno mesto pod suncem čuva miris lavande." }], gifts: [] },
+  { id: "4", name: "Ana i Marko Ilić", birthDate: "1931. — 2009.", deathDate: "1929. — 2015.", bio: "Dvoje ljudi, jedan dom i sedamdeset godina razgovora za istim stolom.", x: -1, z: 5, isPet: false, timeline: [{ year: 1952, title: "Prvi susret", description: "Na stanici, dok je padao prvi sneg." }], gifts: [] },
+];
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.js
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+  const [selected, setSelected] = useState(null);
+  const [query, setQuery] = useState("");
+  const [petOnly, setPetOnly] = useState(false);
+  const filteredMemorials = useMemo(() => memorials.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()) && (!petOnly || item.isPet)), [query, petOnly]);
+  return <main className="app-shell"><header className="topbar"><div className="brand"><div className="brand-symbol"><TreePine size={18} /></div><div><strong>Virtuelni Memorijal</strong><span>Park sećanja · Beograd</span></div></div><div className="top-actions"><span className="online"><i /> Park je otvoren</span><button className="profile-button">Moja porodica <span>JD</span></button></div></header><div className="park-stage"><div className="scene-wrap"><CemeteryScene memorials={filteredMemorials} onSelect={setSelected} /></div><div className="stage-gradient" /><div className="stage-copy"><p className="eyebrow"><Sparkles size={13} /> Prostor za sećanje</p><h1>Priče koje<br /><em>ostaju.</em></h1><p>Prošetajte kroz park i posetite ljude<br className="desktop-only" /> koji su ostavili trag.</p></div><div className="controls-hint"><span>↔</span> Prevuci za pogled <span>·</span> Klikni na spomenik</div><aside className="explorer-panel"><div className="panel-kicker">ISTRAŽI PARK <span>{filteredMemorials.length} memorijala</span></div><div className="search-box"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pronađi ime..." />{query && <button onClick={() => setQuery("")} aria-label="Obriši pretragu"><X size={15} /></button>}</div><div className="filter-row"><button className={petOnly ? "active" : ""} onClick={() => setPetOnly(!petOnly)}><Flower2 size={14} /> Pet zona</button><button><SlidersHorizontal size={14} /> Svi sektori</button></div><div className="results-list">{filteredMemorials.map((item) => <button className="result-item" key={item.id} onClick={() => setSelected(item)}><span className={`result-avatar ${item.isPet ? "pet" : ""}`}>{item.name.split(" ").map((word) => word[0]).join("").slice(0, 2)}</span><span><strong>{item.name}</strong><small>{item.isPet ? "Pet memorijal" : "Sektor Borova"}</small></span><span className="result-arrow">↗</span></button>)}</div></aside></div><MemorialModal memorial={selected} onClose={() => setSelected(null)} /></main>;
 }

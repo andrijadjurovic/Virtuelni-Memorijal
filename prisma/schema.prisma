@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  OWNER
+  MODERATOR
+}
+
+enum PrivacyLevel {
+  PUBLIC
+  PIN_PROTECTED
+  PRIVATE
+}
+
+enum CondolenceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum GiftType {
+  DIGITAL_CANDLE
+  FLOWER_BOUQUET
+  PREMIUM_HEADSTONE
+}
+
+model User {
+  id          String      @id @default(cuid())
+  email       String      @unique
+  name        String?
+  role        UserRole    @default(OWNER)
+  createdAt   DateTime    @default(now())
+  memorials   Memorial[]  @relation("MemorialOwner")
+  approved    Condolence[] @relation("ApprovedBy")
+}
+
+model Family {
+  id          String      @id @default(cuid())
+  name        String
+  createdAt   DateTime    @default(now())
+  memorials   Memorial[]
+}
+
+model Memorial {
+  id            String          @id @default(cuid())
+  ownerId       String?
+  familyId      String?
+  name          String
+  birthDate     DateTime?
+  deathDate     DateTime?
+  bio           String?
+  photoUrl      String?
+  audioUrl      String?
+  headstoneType String          @default("classic")
+  privacy       PrivacyLevel    @default(PUBLIC)
+  pinCode       String?
+  isPet         Boolean         @default(false)
+  positionX     Float           @default(0)
+  positionY     Float           @default(0)
+  positionZ     Float           @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  owner         User?           @relation("MemorialOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  family        Family?         @relation(fields: [familyId], references: [id], onDelete: SetNull)
+  timeline      TimelineEvent[]
+  gifts         GiftTransaction[]
+  condolences  Condolence[]
+  relationsFrom FamilyRelation[] @relation("RelationFrom")
+  relationsTo   FamilyRelation[] @relation("RelationTo")
+
+  @@index([positionX, positionZ])
+  @@index([familyId])
+}
+
+model TimelineEvent {
+  id          String   @id @default(cuid())
+  memorialId  String
+  year        Int
+  title       String
+  description String
+  imageUrl    String?
+  memorial    Memorial @relation(fields: [memorialId], references: [id], onDelete: Cascade)
+
+  @@index([memorialId, year])
+}
+
+model GiftTransaction {
+  id            String   @id @default(cuid())
+  memorialId    String
+  giftType      GiftType
+  stripeSessionId String? @unique
+  purchasedAt   DateTime @default(now())
+  activeUntil   DateTime
+  amount        Int
+  currency      String   @default("eur")
+  memorial      Memorial @relation(fields: [memorialId], references: [id], onDelete: Cascade)
+
+  @@index([memorialId, activeUntil])
+}
+
+model Condolence {
+  id          String           @id @default(cuid())
+  memorialId  String
+  authorName  String
+  content     String
+  status      CondolenceStatus @default(PENDING)
+  approvedById String?
+  createdAt   DateTime         @default(now())
+  memorial    Memorial         @relation(fields: [memorialId], references: [id], onDelete: Cascade)
+  approvedBy  User?            @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([memorialId, status])
+}
+
+model FamilyRelation {
+  id           String   @id @default(cuid())
+  fromMemorialId String
+  toMemorialId String
+  relationType String
+  fromMemorial Memorial @relation("RelationFrom", fields: [fromMemorialId], references: [id], onDelete: Cascade)
+  toMemorial   Memorial @relation("RelationTo", fields: [toMemorialId], references: [id], onDelete: Cascade)
+
+  @@unique([fromMemorialId, toMemorialId])
+}
