@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Html, OrbitControls, Sky } from "@react-three/drei";
+import { ContactShadows, Html, OrbitControls, RoundedBox, Sky } from "@react-three/drei";
+import { Bloom, EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 
 function Terrain({ weather }) {
@@ -57,7 +58,7 @@ function GroundPatch({ position, scale }) {
 }
 
 function GroundRock({ position, scale }) {
-  return <mesh position={position} scale={scale} rotation={[0.1, position[0] * 0.1, 0.2]} castShadow><dodecahedronGeometry args={[0.35, 1]} /><meshStandardMaterial color="#77796b" roughness={0.95} flatShading /></mesh>;
+  return <RoundedBox position={position} scale={scale} rotation={[0.1, position[0] * 0.1, 0.2]} args={[0.6, 0.38, 0.5]} radius={0.12} smoothness={3} castShadow><meshStandardMaterial color="#77796b" roughness={0.95} /></RoundedBox>;
 }
 
 function FlowerBed({ position }) {
@@ -73,11 +74,11 @@ function GrassTuft({ position }) {
 }
 
 function Tree({ position, scale = 1 }) {
-  return <group position={position} scale={scale}><mesh position-y={1.3} castShadow><cylinderGeometry args={[0.16, 0.28, 2.6, 8]} /><meshStandardMaterial color="#57402f" roughness={0.95} /></mesh><mesh position={[-0.18, 2.35, 0]} rotation-z={-0.25} castShadow><cylinderGeometry args={[0.07, 0.12, 1.35, 7]} /><meshStandardMaterial color="#57402f" roughness={0.95} /></mesh><mesh position-y={2.55} castShadow><icosahedronGeometry args={[1.35, 2]} /><meshStandardMaterial color="#294c35" roughness={1} flatShading /></mesh><mesh position={[-0.5, 3.05, 0.25]} castShadow><icosahedronGeometry args={[0.78, 2]} /><meshStandardMaterial color="#3e6944" roughness={1} flatShading /></mesh><mesh position={[0.5, 2.9, -0.18]} castShadow><icosahedronGeometry args={[0.7, 2]} /><meshStandardMaterial color="#345b3b" roughness={1} flatShading /></mesh></group>;
+  return <group position={position} scale={scale}><mesh position-y={1.3} castShadow><cylinderGeometry args={[0.16, 0.28, 2.6, 10]} /><meshStandardMaterial color="#57402f" roughness={0.95} /></mesh><mesh position={[-0.18, 2.35, 0]} rotation-z={-0.25} castShadow><cylinderGeometry args={[0.07, 0.12, 1.35, 9]} /><meshStandardMaterial color="#57402f" roughness={0.95} /></mesh><mesh position-y={2.55} castShadow><sphereGeometry args={[1.35, 20, 14]} /><meshStandardMaterial color="#294c35" roughness={1} /></mesh><mesh position={[-0.5, 3.05, 0.25]} castShadow><sphereGeometry args={[0.78, 18, 12]} /><meshStandardMaterial color="#3e6944" roughness={1} /></mesh><mesh position={[0.5, 2.9, -0.18]} castShadow><sphereGeometry args={[0.7, 18, 12]} /><meshStandardMaterial color="#345b3b" roughness={1} /></mesh></group>;
 }
 
 function Shrub({ position }) {
-  return <mesh position={[position[0], 0.35, position[2]]} scale={[1.3, 0.7, 1]} castShadow><icosahedronGeometry args={[0.55, 1]} /><meshStandardMaterial color="#507552" roughness={1} /></mesh>;
+  return <mesh position={[position[0], 0.35, position[2]]} scale={[1.3, 0.7, 1]} castShadow><sphereGeometry args={[0.55, 16, 10]} /><meshStandardMaterial color="#507552" roughness={1} /></mesh>;
 }
 
 function AmbientStone({ position, rotation }) {
@@ -125,14 +126,14 @@ function Headstone({ memorial, activeGifts, onSelect }) {
   return <group position={position} onClick={(event) => { event.stopPropagation(); onSelect(memorial); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
     <mesh position={[0, 0.12, 0.4]} rotation-x={-Math.PI / 2} receiveShadow><circleGeometry args={[1.25, 24]} /><meshStandardMaterial color="#5f7956" /></mesh>
     <mesh position-y={0.7} castShadow scale={hovered ? 1.05 : 1}>
-      <boxGeometry args={[1.15, 1.6, 0.38]} />
+      <RoundedBox args={[1.15, 1.6, 0.38]} radius={0.12} smoothness={4} />
       <meshStandardMaterial color={memorial.isPet ? "#9b7860" : hovered ? "#d8c8a8" : "#aaa391"} roughness={0.62} flatShading />
     </mesh>
     <mesh position-y={1.5} castShadow>
       <sphereGeometry args={[0.53, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
       <meshStandardMaterial color={memorial.isPet ? "#92715f" : hovered ? "#d8c8a8" : "#afa68f"} roughness={0.75} />
     </mesh>
-    <mesh position-y={0.05} receiveShadow><boxGeometry args={[1.45, 0.15, 0.65]} /><meshStandardMaterial color="#746c5a" /></mesh>
+    <RoundedBox position-y={0.05} args={[1.45, 0.15, 0.65]} radius={0.05} smoothness={3} receiveShadow><meshStandardMaterial color="#746c5a" roughness={0.82} /></RoundedBox>
     <mesh position={[0, 0.9, -0.21]}><boxGeometry args={[0.58, 0.08, 0.02]} /><meshStandardMaterial color="#d9c58f" emissive="#a88948" emissiveIntensity={0.35} /></mesh>
     <mesh position={[0, 1.22, -0.22]}><boxGeometry args={[0.07, 0.38, 0.025]} /><meshStandardMaterial color="#d9c58f" /></mesh>
     <mesh position={[0, 1.22, -0.23]}><boxGeometry args={[0.25, 0.07, 0.025]} /><meshStandardMaterial color="#d9c58f" /></mesh>
@@ -173,13 +174,15 @@ function WeatherEffects({ weather }) {
 
 export default function CemeteryScene({ memorials, onSelect, weather = "sun" }) {
   const [focused, setFocused] = useState(null);
-  return <Canvas shadows dpr={[1, 1.5]} camera={{ position: [11, 8, 15], fov: 42 }} onPointerMissed={() => setFocused(null)} onCreated={({ gl, scene }) => { gl.setClearColor("#a8c5c1"); gl.shadowMap.type = THREE.PCFSoftShadowMap; scene.fog = new THREE.Fog("#a8c5c1", 36, 86); }}>
+  return <Canvas shadows dpr={[1, 1.5]} gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }} camera={{ position: [11, 8, 15], fov: 42 }} onPointerMissed={() => setFocused(null)} onCreated={({ gl, scene }) => { gl.setClearColor("#a8c5c1"); gl.shadowMap.type = THREE.PCFSoftShadowMap; scene.fog = new THREE.Fog("#a8c5c1", 36, 86); }}>
     <fog attach="fog" args={[weather === "fog" ? "#a9b7b2" : weather === "storm" ? "#53636a" : "#a8c5c1", weather === "fog" ? 8 : 36, weather === "fog" ? 42 : 86]} />
     <ambientLight intensity={weather === "storm" ? 0.22 : weather === "fog" ? 0.38 : 0.48} color="#dce8d6" />
     <hemisphereLight color="#dcebe1" groundColor="#304b38" intensity={weather === "storm" ? 0.42 : 0.7} />
     <directionalLight castShadow position={[-12, 18, -10]} intensity={weather === "storm" ? 0.75 : weather === "fog" ? 1.1 : 2.4} color={weather === "storm" ? "#b8c7db" : "#fff0c5"} shadow-mapSize={[2048, 2048]} shadow-bias={-0.0002} />
     <Sky sunPosition={[-4, 5, -10]} turbidity={weather === "fog" ? 12 : weather === "storm" ? 18 : 5} rayleigh={weather === "fog" ? 2.5 : 1.8} mieCoefficient={weather === "fog" ? 0.08 : 0.015} />
     <Terrain weather={weather} />
+    <ContactShadows position={[0, 0.02, 0]} opacity={weather === "storm" ? 0.5 : 0.34} scale={70} blur={2.6} far={18} resolution={1024} />
+    <EffectComposer multisampling={4}><Bloom luminanceThreshold={1.1} intensity={weather === "storm" ? 0.35 : 0.55} mipmapBlur /><Noise opacity={0.018} /><Vignette eskil={false} offset={0.18} darkness={0.52} /></EffectComposer>
     <WeatherEffects weather={weather} />
     {memorials.map((memorial) => <Headstone key={memorial.id} memorial={memorial} activeGifts={memorial.gifts.filter((gift) => new Date(gift.activeUntil) > new Date())} onSelect={(item) => { setFocused(item); onSelect(item); }} />)}
     <CameraFocus target={focused} />
