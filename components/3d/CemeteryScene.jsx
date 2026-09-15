@@ -74,7 +74,43 @@ function GrassTuft({ position }) {
 }
 
 function Tree({ position, scale = 1 }) {
-  return <group position={position} scale={scale}><mesh position-y={1.3} castShadow><cylinderGeometry args={[0.16, 0.28, 2.6, 10]} /><meshStandardMaterial color="#57402f" roughness={0.95} /></mesh><mesh position={[-0.18, 2.35, 0]} rotation-z={-0.25} castShadow><cylinderGeometry args={[0.07, 0.12, 1.35, 9]} /><meshStandardMaterial color="#57402f" roughness={0.95} /></mesh><mesh position-y={2.55} castShadow><sphereGeometry args={[1.35, 20, 14]} /><meshStandardMaterial color="#294c35" roughness={1} /></mesh><mesh position={[-0.5, 3.05, 0.25]} castShadow><sphereGeometry args={[0.78, 18, 12]} /><meshStandardMaterial color="#3e6944" roughness={1} /></mesh><mesh position={[0.5, 2.9, -0.18]} castShadow><sphereGeometry args={[0.7, 18, 12]} /><meshStandardMaterial color="#345b3b" roughness={1} /></mesh></group>;
+  return <group position={position} scale={scale}>
+    <mesh position-y={1.35} castShadow><cylinderGeometry args={[0.2, 0.46, 2.7, 12]} /><meshStandardMaterial color="#4d382a" roughness={1} /></mesh>
+    <Branch start={[0, 2.25, 0]} end={[-0.95, 3.65, 0.08]} radius={0.16} />
+    <Branch start={[0.04, 2.45, 0]} end={[0.95, 3.75, -0.12]} radius={0.15} />
+    <Branch start={[-0.12, 3.05, 0.02]} end={[-1.5, 4.25, 0.15]} radius={0.11} />
+    <Branch start={[0.24, 3.15, -0.05]} end={[1.45, 4.35, -0.2]} radius={0.1} />
+    <Branch start={[-0.55, 3.5, 0.08]} end={[-0.65, 4.45, 0.35]} radius={0.075} />
+    <Branch start={[0.65, 3.55, -0.12]} end={[0.85, 4.55, -0.32]} radius={0.07} />
+    <Root start={[-0.08, 0.18, 0]} end={[-0.95, 0.04, 0.12]} rotation-y={-0.18} />
+    <Root start={[0.12, 0.18, 0]} end={[0.9, 0.04, -0.18]} rotation-y={0.22} />
+    <Root start={[0, 0.18, 0.08]} end={[0.08, 0.04, 0.9]} rotation-y={Math.PI / 2} />
+    <BarkRidges />
+    <FoliageCluster position={[-1.25, 4.25, 0.12]} scale={0.92} color="#315a3b" />
+    <FoliageCluster position={[1.3, 4.35, -0.16]} scale={0.88} color="#3f6d46" />
+    <FoliageCluster position={[-0.55, 4.8, 0.32]} scale={0.76} color="#426f48" />
+    <FoliageCluster position={[0.72, 4.95, -0.28]} scale={0.7} color="#2b5338" />
+    <FoliageCluster position={[0, 4.25, 0]} scale={0.62} color="#527a4d" />
+  </group>;
+}
+
+function Branch({ start, end, radius }) {
+  const midpoint = start.map((value, index) => (value + end[index]) / 2);
+  const direction = new THREE.Vector3(...end).sub(new THREE.Vector3(...start));
+  return <mesh position={midpoint} quaternion={new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize())} castShadow><cylinderGeometry args={[radius * 0.48, radius, direction.length(), 9]} /><meshStandardMaterial color="#503a2b" roughness={1} /></mesh>;
+}
+
+function Root({ start, end, rotation }) {
+  const direction = new THREE.Vector3(...end).sub(new THREE.Vector3(...start));
+  return <mesh position={[(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2]} rotation={[0, rotation, 0]} scale={[1, 1, 0.55]} castShadow><coneGeometry args={[0.25, direction.length(), 8]} /><meshStandardMaterial color="#5a402d" roughness={1} /></mesh>;
+}
+
+function BarkRidges() {
+  return <group>{[-0.16, -0.06, 0.08, 0.18].map((x, index) => <mesh key={index} position={[x, 1.35, 0.2]} rotation-z={(index - 1.5) * 0.08} castShadow><boxGeometry args={[0.035, 2.25 + index % 2 * 0.3, 0.035]} /><meshStandardMaterial color={index % 2 ? "#684831" : "#3b2b23"} roughness={1} /></mesh>)}</group>;
+}
+
+function FoliageCluster({ position, scale, color }) {
+  return <group position={position} scale={scale}><mesh castShadow><sphereGeometry args={[1, 16, 12]} /><meshStandardMaterial color={color} roughness={1} /></mesh><mesh position={[-0.55, 0.18, 0.12]} scale={0.64} castShadow><sphereGeometry args={[1, 14, 10]} /><meshStandardMaterial color={color} roughness={1} /></mesh><mesh position={[0.55, -0.08, -0.12]} scale={0.58} castShadow><sphereGeometry args={[1, 14, 10]} /><meshStandardMaterial color={color} roughness={1} /></mesh>{Array.from({ length: 10 }).map((_, index) => { const angle = index * 0.628; return <mesh key={index} position={[Math.cos(angle) * 0.92, Math.sin(angle * 1.7) * 0.48, Math.sin(angle) * 0.92]} rotation={[0.3 + Math.sin(index) * 0.25, angle, 0.35]} scale={[0.28, 0.5, 0.035]} castShadow><sphereGeometry args={[1, 8, 5]} /><meshStandardMaterial color={index % 3 ? color : "#5f8751"} roughness={1} /></mesh>; })}</group>;
 }
 
 function Shrub({ position }) {
