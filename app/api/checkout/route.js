@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 const giftCatalog = {
   DIGITAL_CANDLE: { label: "Digitalna sveća · 48h", amount: 299, days: 2 },
@@ -9,6 +9,7 @@ const giftCatalog = {
 
 export async function POST(request) {
   try {
+    const stripe = getStripe();
     if (!stripe) return NextResponse.json({ error: "Stripe nije konfigurisan." }, { status: 503 });
     const { memorialId, giftType } = await request.json();
     const gift = giftCatalog[giftType];
