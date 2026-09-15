@@ -90,19 +90,19 @@ function Lantern({ position }) {
 }
 
 function Bench({ position, rotation }) {
-  return <group position={position} rotation={rotation}><mesh position-y={0.65} castShadow><boxGeometry args={[2.4, 0.14, 0.42]} /><meshStandardMaterial color="#75533c" /></mesh><mesh position={[-0.85, 0.3, 0]}><boxGeometry args={[0.12, 0.65, 0.32]} /><meshStandardMaterial color="#46594b" /></mesh><mesh position={[0.85, 0.3, 0]}><boxGeometry args={[0.12, 0.65, 0.32]} /><meshStandardMaterial color="#46594b" /></mesh></group>;
+  return <group position={position} rotation={rotation}><RoundedBox position-y={0.65} args={[2.4, 0.14, 0.42]} radius={0.04} smoothness={3} castShadow><meshStandardMaterial color="#75533c" roughness={0.7} /></RoundedBox><RoundedBox position-y={0.96} rotation-x={-0.18} args={[2.4, 0.75, 0.14]} radius={0.04} smoothness={3} castShadow><meshStandardMaterial color="#75533c" roughness={0.7} /></RoundedBox><mesh position={[-0.85, 0.3, 0]}><boxGeometry args={[0.12, 0.65, 0.32]} /><meshStandardMaterial color="#46594b" metalness={0.35} /></mesh><mesh position={[0.85, 0.3, 0]}><boxGeometry args={[0.12, 0.65, 0.32]} /><meshStandardMaterial color="#46594b" metalness={0.35} /></mesh><mesh position-y={0.38}><boxGeometry args={[1.8, 0.035, 0.5]} /><meshStandardMaterial color="#b28a61" /></mesh></group>;
 }
 
 function Fountain() {
-  return <group position={[0, 0.1, 0]}><mesh castShadow><cylinderGeometry args={[3.5, 3.7, 0.35, 32]} /><meshStandardMaterial color="#817d73" roughness={0.88} metalness={0.08} /></mesh><mesh position-y={0.25}><cylinderGeometry args={[2.9, 3, 0.12, 32]} /><meshPhysicalMaterial color="#659294" metalness={0.15} roughness={0.08} transmission={0.12} clearcoat={0.8} /></mesh><mesh position-y={1.2} castShadow><cylinderGeometry args={[0.32, 0.45, 2, 16]} /><meshStandardMaterial color="#9e9b91" roughness={0.82} /></mesh><mesh position-y={2.25}><sphereGeometry args={[0.35, 16, 10]} /><meshStandardMaterial color="#759b9b" roughness={0.25} /></mesh><pointLight position-y={1} color="#9ad2d0" intensity={0.35} distance={8} /></group>;
+  return <group position={[0, 0.1, 0]}><mesh castShadow><cylinderGeometry args={[3.5, 3.7, 0.35, 32]} /><meshStandardMaterial color="#817d73" roughness={0.88} metalness={0.08} /></mesh><mesh position-y={0.25}><cylinderGeometry args={[2.9, 3, 0.12, 32]} /><meshPhysicalMaterial color="#659294" metalness={0.15} roughness={0.08} transmission={0.12} clearcoat={0.8} /></mesh><mesh position-y={1.2} castShadow><cylinderGeometry args={[0.32, 0.45, 2, 16]} /><meshStandardMaterial color="#9e9b91" roughness={0.82} /></mesh><mesh position-y={2.25}><sphereGeometry args={[0.35, 16, 10]} /><meshStandardMaterial color="#759b9b" roughness={0.25} /></mesh>{[0, 1, 2, 3].map((index) => <mesh key={index} position={[Math.cos(index * 1.57) * 0.6, 1.3, Math.sin(index * 1.57) * 0.6]} rotation-x={Math.PI / 2}><torusGeometry args={[0.08, 0.025, 6, 12]} /><meshStandardMaterial color="#82b3b0" emissive="#609d9c" emissiveIntensity={0.4} /></mesh>)}<pointLight position-y={1} color="#9ad2d0" intensity={0.35} distance={8} /></group>;
 }
 
 function Entrance() {
-  return <group position={[0, 0, -37]}><mesh position={[-3, 2.8, 0]} castShadow><boxGeometry args={[0.55, 5.6, 0.65]} /><meshStandardMaterial color="#7d7565" /></mesh><mesh position={[3, 2.8, 0]} castShadow><boxGeometry args={[0.55, 5.6, 0.65]} /><meshStandardMaterial color="#7d7565" /></mesh><mesh position-y={5.3} castShadow><boxGeometry args={[6.5, 0.55, 0.7]} /><meshStandardMaterial color="#8e8067" /></mesh><mesh position-y={4.7}><boxGeometry args={[4.8, 0.8, 0.1]} /><meshStandardMaterial color="#d3bd86" emissive="#493d25" emissiveIntensity={0.2} /></mesh></group>;
+  return <group position={[0, 0, -37]}><mesh position={[-3, 2.8, 0]} castShadow><boxGeometry args={[0.55, 5.6, 0.65]} /><meshStandardMaterial color="#7d7565" roughness={0.8} /></mesh><mesh position={[3, 2.8, 0]} castShadow><boxGeometry args={[0.55, 5.6, 0.65]} /><meshStandardMaterial color="#7d7565" roughness={0.8} /></mesh><RoundedBox position-y={5.3} args={[6.5, 0.55, 0.7]} radius={0.12} smoothness={4} castShadow><meshStandardMaterial color="#8e8067" roughness={0.75} /></RoundedBox><RoundedBox position-y={4.7} args={[4.8, 0.8, 0.1]} radius={0.04} smoothness={3}><meshStandardMaterial color="#d3bd86" emissive="#493d25" emissiveIntensity={0.2} /></RoundedBox><mesh position={[-2.1, 2.5, -0.38]} rotation-z={Math.PI / 2}><torusGeometry args={[0.65, 0.055, 8, 20]} /><meshStandardMaterial color="#b59660" metalness={0.7} roughness={0.28} /></mesh><mesh position={[2.1, 2.5, -0.38]} rotation-z={Math.PI / 2}><torusGeometry args={[0.65, 0.055, 8, 20]} /><meshStandardMaterial color="#b59660" metalness={0.7} roughness={0.28} /></mesh></group>;
 }
 
 function Gazebo({ position }) {
-  return <group position={position}><mesh position-y={3.4} castShadow><coneGeometry args={[3.2, 1.5, 6]} /><meshStandardMaterial color="#647c62" /></mesh>{[-2, 2, -2, 2].map((x, index) => <mesh key={index} position={[x, 1.8, index < 2 ? -2 : 2]} castShadow><cylinderGeometry args={[0.12, 0.16, 3.6, 8]} /><meshStandardMaterial color="#6d5945" /></mesh>)}</group>;
+  return <group position={position}><mesh position-y={3.4} castShadow><coneGeometry args={[3.2, 1.5, 6]} /><meshStandardMaterial color="#647c62" roughness={0.8} /></mesh><mesh position-y={3.05} castShadow><cylinderGeometry args={[2.45, 2.45, 0.18, 6]} /><meshStandardMaterial color="#5a6c55" roughness={0.8} /></mesh>{[-2, 2, -2, 2].map((x, index) => <mesh key={index} position={[x, 1.8, index < 2 ? -2 : 2]} castShadow><cylinderGeometry args={[0.12, 0.16, 3.6, 10]} /><meshStandardMaterial color="#6d5945" roughness={0.8} /></mesh>)}{[-2, 2].map((x) => <mesh key={`rail-${x}`} position={[x, 1.1, 0]} rotation-z={Math.PI / 2}><cylinderGeometry args={[0.045, 0.045, 4, 8]} /><meshStandardMaterial color="#6d5945" /></mesh>)}<mesh position-y={0.12} castShadow><cylinderGeometry args={[2.4, 2.4, 0.16, 6]} /><meshStandardMaterial color="#987552" roughness={0.75} /></mesh></group>;
 }
 
 function GiftProp({ type, position }) {
@@ -120,6 +120,10 @@ function GiftProp({ type, position }) {
   </group>;
 }
 
+function MemorialWreath({ pet }) {
+  return <group position={[0, 0.78, -0.24]} rotation-x={Math.PI / 2} scale={pet ? 0.82 : 1}>{Array.from({ length: 10 }).map((_, index) => <mesh key={index} position={[Math.cos(index * 0.628) * 0.28, Math.sin(index * 0.628) * 0.28, 0]} rotation-z={index * 0.628} scale={[0.12, 0.2, 0.04]}><sphereGeometry args={[1, 10, 6]} /><meshStandardMaterial color={index % 2 ? "#5d8759" : "#789b61"} roughness={0.85} /></mesh>)}</group>;
+}
+
 function Headstone({ memorial, activeGifts, onSelect }) {
   const [hovered, setHovered] = useState(false);
   const position = [memorial.x, 0, memorial.z];
@@ -133,6 +137,9 @@ function Headstone({ memorial, activeGifts, onSelect }) {
       <sphereGeometry args={[0.53, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
       <meshStandardMaterial color={memorial.isPet ? "#92715f" : hovered ? "#d8c8a8" : "#afa68f"} roughness={0.75} />
     </mesh>
+    <RoundedBox position={[0, 0.83, -0.205]} args={[0.74, 0.58, 0.025]} radius={0.06} smoothness={3}><meshStandardMaterial color="#817d70" roughness={0.8} /></RoundedBox>
+    <MemorialWreath pet={memorial.isPet} />
+    {memorial.isPet && <group position={[0, 1.57, -0.23]}><mesh position-x={-0.23} rotation-z={-0.35}><coneGeometry args={[0.22, 0.42, 4]} /><meshStandardMaterial color="#9b7860" roughness={0.75} /></mesh><mesh position-x={0.23} rotation-z={0.35}><coneGeometry args={[0.22, 0.42, 4]} /><meshStandardMaterial color="#9b7860" roughness={0.75} /></mesh></group>}
     <RoundedBox position-y={0.05} args={[1.45, 0.15, 0.65]} radius={0.05} smoothness={3} receiveShadow><meshStandardMaterial color="#746c5a" roughness={0.82} /></RoundedBox>
     <mesh position={[0, 0.9, -0.21]}><boxGeometry args={[0.58, 0.08, 0.02]} /><meshStandardMaterial color="#d9c58f" emissive="#a88948" emissiveIntensity={0.35} /></mesh>
     <mesh position={[0, 1.22, -0.22]}><boxGeometry args={[0.07, 0.38, 0.025]} /><meshStandardMaterial color="#d9c58f" /></mesh>
