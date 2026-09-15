@@ -47,7 +47,7 @@ export async function GET() {
       },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json({ memorials: memorials.map(serializeMemorial), source: "supabase-postgres" });
+    return NextResponse.json({ memorials: memorials.map(serializeMemorial), source: "sqlite" });
   } catch (error) {
     console.error("Failed to load memorials", error);
     return NextResponse.json({ error: "Memorijali trenutno nisu dostupni." }, { status: 503 });

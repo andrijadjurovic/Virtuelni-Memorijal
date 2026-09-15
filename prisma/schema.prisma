@@ -3,39 +3,15 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-enum UserRole {
-  ADMIN
-  OWNER
-  MODERATOR
-}
-
-enum PrivacyLevel {
-  PUBLIC
-  PIN_PROTECTED
-  PRIVATE
-}
-
-enum CondolenceStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum GiftType {
-  DIGITAL_CANDLE
-  FLOWER_BOUQUET
-  PREMIUM_HEADSTONE
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
   id          String      @id @default(cuid())
   email       String      @unique
   name        String?
-  role        UserRole    @default(OWNER)
+  role        String      @default("OWNER")
   createdAt   DateTime    @default(now())
   memorials   Memorial[]  @relation("MemorialOwner")
   approved    Condolence[] @relation("ApprovedBy")
@@ -59,7 +35,7 @@ model Memorial {
   photoUrl      String?
   audioUrl      String?
   headstoneType String          @default("classic")
-  privacy       PrivacyLevel    @default(PUBLIC)
+  privacy       String          @default("PUBLIC")
   pinCode       String?
   isPet         Boolean         @default(false)
   positionX     Float           @default(0)
@@ -94,7 +70,7 @@ model TimelineEvent {
 model GiftTransaction {
   id            String   @id @default(cuid())
   memorialId    String
-  giftType      GiftType
+  giftType      String
   stripeSessionId String? @unique
   purchasedAt   DateTime @default(now())
   activeUntil   DateTime
@@ -110,7 +86,7 @@ model Condolence {
   memorialId  String
   authorName  String
   content     String
-  status      CondolenceStatus @default(PENDING)
+  status      String           @default("PENDING")
   approvedById String?
   createdAt   DateTime         @default(now())
   memorial    Memorial         @relation(fields: [memorialId], references: [id], onDelete: Cascade)
