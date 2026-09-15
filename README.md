@@ -31,9 +31,9 @@ prisma/
 
 Za lokalne Stripe webhook događaje koristiti `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
 
-## Lokalna SQLite baza
+## Baza: lokalni SQLite ili Turso
 
-Projekat koristi lokalnu SQLite bazu u `prisma/dev.db`, bez naloga, cloud podešavanja ili connection string lozinke. Prisma ostaje ORM, a baza je spremna odmah nakon kloniranja projekta.
+Lokalni razvoj koristi `prisma/dev.db`. Za Vercel koristi Turso, hostovani SQLite koji je kompatibilan sa Prisma modelom i radi trajno između deploy-a.
 
 ```bash
 npx prisma generate
@@ -42,6 +42,17 @@ npm run db:seed
 ```
 
 `prisma/migrations/20260915181608_init_sqlite/migration.sql` automatski kreira sve tabele. `prisma/seed.js` automatski ubacuje četiri demo memorijala, timeline događaje i aktivne digitalne poklone, tako da nije potrebno ručno unositi podatke.
+
+### Turso na Vercelu
+
+1. Otvoriti `https://turso.tech`, napraviti nalog i instalirati Turso CLI.
+2. Pokrenuti `turso db create virtualni-memorijal`.
+3. Pokrenuti `turso db show virtualni-memorijal` i uzeti libSQL URL.
+4. Pokrenuti `turso db tokens create virtualni-memorijal` i sačuvati token.
+5. Lokalno postaviti `TURSO_DATABASE_URL` i `TURSO_AUTH_TOKEN`, pa pokrenuti `npm run db:turso:setup` i `npm run db:seed`.
+6. Na Vercelu dodati iste dve environment promenljive za `Production`.
+
+`npm run db:turso:setup` šalje postojeću Prisma SQL migraciju direktno u Turso; `npm run db:seed` zatim ubacuje sve mock podatke.
 
 API `GET /api/memorials` čita javne memorijale, timeline događaje i aktivne poklone iz lokalne SQLite baze. Ako baza nije dostupna, početni ekran koristi lokalne demo memorijale kako bi aplikacija i dalje mogla da se pregleda.
 

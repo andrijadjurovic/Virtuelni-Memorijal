@@ -36,7 +36,7 @@ function serializeMemorial(memorial) {
 }
 
 export async function GET() {
-  if (!process.env.DATABASE_URL) return NextResponse.json({ memorials: [], source: "demo" });
+  if (!process.env.DATABASE_URL && !process.env.TURSO_DATABASE_URL) return NextResponse.json({ memorials: [], source: "demo" });
 
   try {
     const memorials = await prisma.memorial.findMany({
@@ -47,7 +47,7 @@ export async function GET() {
       },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json({ memorials: memorials.map(serializeMemorial), source: "sqlite" });
+    return NextResponse.json({ memorials: memorials.map(serializeMemorial), source: process.env.TURSO_DATABASE_URL ? "turso" : "sqlite" });
   } catch (error) {
     console.error("Failed to load memorials", error);
     return NextResponse.json({ error: "Memorijali trenutno nisu dostupni." }, { status: 503 });
