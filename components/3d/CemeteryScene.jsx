@@ -37,7 +37,7 @@ function Terrain() {
 }
 
 function Tree({ position, scale = 1 }) {
-  return <group position={position} scale={scale}><mesh position-y={1.3} castShadow><cylinderGeometry args={[0.16, 0.24, 2.6, 7]} /><meshStandardMaterial color="#5f4936" /></mesh><mesh position-y={2.7} castShadow><dodecahedronGeometry args={[1.25, 1]} /><meshStandardMaterial color="#31583c" roughness={1} /></mesh><mesh position={[-0.45, 3.2, 0.2]} castShadow><dodecahedronGeometry args={[0.65, 1]} /><meshStandardMaterial color="#47704a" roughness={1} /></mesh></group>;
+  return <group position={position} scale={scale}><mesh position-y={1.3} castShadow><cylinderGeometry args={[0.16, 0.28, 2.6, 8]} /><meshStandardMaterial color="#57402f" roughness={0.95} /></mesh><mesh position={[-0.18, 2.35, 0]} rotation-z={-0.25} castShadow><cylinderGeometry args={[0.07, 0.12, 1.35, 7]} /><meshStandardMaterial color="#57402f" roughness={0.95} /></mesh><mesh position-y={2.55} castShadow><icosahedronGeometry args={[1.35, 2]} /><meshStandardMaterial color="#294c35" roughness={1} flatShading /></mesh><mesh position={[-0.5, 3.05, 0.25]} castShadow><icosahedronGeometry args={[0.78, 2]} /><meshStandardMaterial color="#3e6944" roughness={1} flatShading /></mesh><mesh position={[0.5, 2.9, -0.18]} castShadow><icosahedronGeometry args={[0.7, 2]} /><meshStandardMaterial color="#345b3b" roughness={1} flatShading /></mesh></group>;
 }
 
 function Shrub({ position }) {
@@ -49,7 +49,7 @@ function AmbientStone({ position, rotation }) {
 }
 
 function Lantern({ position }) {
-  return <group position={position}><mesh position-y={1.1} castShadow><cylinderGeometry args={[0.045, 0.07, 2.2, 8]} /><meshStandardMaterial color="#293b32" metalness={0.7} roughness={0.3} /></mesh><mesh position-y={2.15}><boxGeometry args={[0.28, 0.35, 0.28]} /><meshStandardMaterial color="#b8a06e" emissive="#efb85a" emissiveIntensity={0.6} /></mesh><pointLight position-y={2.1} color="#ffd28a" intensity={0.32} distance={4} /></group>;
+  return <group position={position}><mesh position-y={1.1} castShadow><cylinderGeometry args={[0.045, 0.08, 2.2, 8]} /><meshStandardMaterial color="#1c2d27" metalness={0.8} roughness={0.25} /></mesh><mesh position-y={2.15} castShadow><cylinderGeometry args={[0.22, 0.26, 0.42, 6]} /><meshStandardMaterial color="#1c2d27" metalness={0.75} roughness={0.25} /></mesh><mesh position-y={2.15}><sphereGeometry args={[0.13, 12, 8]} /><meshStandardMaterial color="#ffd681" emissive="#ff9d3d" emissiveIntensity={2} transparent opacity={0.9} /></mesh><pointLight position-y={2.1} color="#ffd28a" intensity={0.55} distance={5} /></group>;
 }
 
 function Bench({ position, rotation }) {
@@ -57,7 +57,7 @@ function Bench({ position, rotation }) {
 }
 
 function Fountain() {
-  return <group position={[0, 0.1, 0]}><mesh castShadow><cylinderGeometry args={[3.5, 3.7, 0.35, 32]} /><meshStandardMaterial color="#928c7d" roughness={0.7} /></mesh><mesh position-y={0.25}><cylinderGeometry args={[2.9, 3, 0.12, 32]} /><meshStandardMaterial color="#73999a" metalness={0.2} roughness={0.15} /></mesh><mesh position-y={1.2}><cylinderGeometry args={[0.32, 0.45, 2, 16]} /><meshStandardMaterial color="#aaa394" /></mesh><mesh position-y={2.25}><sphereGeometry args={[0.35, 16, 10]} /><meshStandardMaterial color="#759b9b" /></mesh><pointLight position-y={1} color="#9ad2d0" intensity={0.35} distance={8} /></group>;
+  return <group position={[0, 0.1, 0]}><mesh castShadow><cylinderGeometry args={[3.5, 3.7, 0.35, 32]} /><meshStandardMaterial color="#817d73" roughness={0.88} metalness={0.08} /></mesh><mesh position-y={0.25}><cylinderGeometry args={[2.9, 3, 0.12, 32]} /><meshPhysicalMaterial color="#659294" metalness={0.15} roughness={0.08} transmission={0.12} clearcoat={0.8} /></mesh><mesh position-y={1.2} castShadow><cylinderGeometry args={[0.32, 0.45, 2, 16]} /><meshStandardMaterial color="#9e9b91" roughness={0.82} /></mesh><mesh position-y={2.25}><sphereGeometry args={[0.35, 16, 10]} /><meshStandardMaterial color="#759b9b" roughness={0.25} /></mesh><pointLight position-y={1} color="#9ad2d0" intensity={0.35} distance={8} /></group>;
 }
 
 function Entrance() {
@@ -93,6 +93,8 @@ function Headstone({ memorial, activeGifts, onSelect }) {
     </mesh>
     <mesh position-y={0.05} receiveShadow><boxGeometry args={[1.45, 0.15, 0.65]} /><meshStandardMaterial color="#746c5a" /></mesh>
     <mesh position={[0, 0.9, -0.21]}><boxGeometry args={[0.58, 0.08, 0.02]} /><meshStandardMaterial color="#d9c58f" emissive="#a88948" emissiveIntensity={0.35} /></mesh>
+    <mesh position={[0, 1.22, -0.22]}><boxGeometry args={[0.07, 0.38, 0.025]} /><meshStandardMaterial color="#d9c58f" /></mesh>
+    <mesh position={[0, 1.22, -0.23]}><boxGeometry args={[0.25, 0.07, 0.025]} /><meshStandardMaterial color="#d9c58f" /></mesh>
     {activeGifts.map((gift) => <GiftProp key={gift.id} type={gift.giftType} position={[0, 0, 0]} />)}
     {hovered && <Html position={[0, 2.7, 0]} center distanceFactor={8}><div className="scene-preview"><span>{memorial.isPet ? "PET MEMORIJAL" : "MEMORIJAL"}</span><strong>{memorial.name}</strong><small>Otvori sećanje →</small></div></Html>}
   </group>;
@@ -112,10 +114,11 @@ function CameraFocus({ target }) {
 
 export default function CemeteryScene({ memorials, onSelect }) {
   const [focused, setFocused] = useState(null);
-  return <Canvas shadows camera={{ position: [11, 8, 15], fov: 42 }} onPointerMissed={() => setFocused(null)} onCreated={({ gl }) => { gl.setClearColor("#a8c5c1"); }}>
-    <ambientLight intensity={0.65} color="#dce8d6" />
-    <directionalLight castShadow position={[8, 14, 4]} intensity={2.2} color="#fff0c5" shadow-mapSize={[2048, 2048]} />
-    <Sky sunPosition={[-4, 5, -10]} turbidity={7} rayleigh={1.4} />
+  return <Canvas shadows dpr={[1, 1.5]} camera={{ position: [11, 8, 15], fov: 42 }} onPointerMissed={() => setFocused(null)} onCreated={({ gl, scene }) => { gl.setClearColor("#a8c5c1"); gl.shadowMap.type = THREE.PCFSoftShadowMap; scene.fog = new THREE.Fog("#a8c5c1", 36, 86); }}>
+    <ambientLight intensity={0.48} color="#dce8d6" />
+    <hemisphereLight color="#dcebe1" groundColor="#304b38" intensity={0.7} />
+    <directionalLight castShadow position={[-12, 18, -10]} intensity={2.4} color="#fff0c5" shadow-mapSize={[2048, 2048]} shadow-bias={-0.0002} />
+    <Sky sunPosition={[-4, 5, -10]} turbidity={5} rayleigh={1.8} mieCoefficient={0.015} />
     <Terrain />
     {memorials.map((memorial) => <Headstone key={memorial.id} memorial={memorial} activeGifts={memorial.gifts.filter((gift) => new Date(gift.activeUntil) > new Date())} onSelect={(item) => { setFocused(item); onSelect(item); }} />)}
     <CameraFocus target={focused} />
