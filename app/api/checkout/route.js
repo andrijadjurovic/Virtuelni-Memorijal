@@ -9,6 +9,7 @@ const giftCatalog = {
 
 export async function POST(request) {
   try {
+    if (!stripe) return NextResponse.json({ error: "Stripe nije konfigurisan." }, { status: 503 });
     const { memorialId, giftType } = await request.json();
     const gift = giftCatalog[giftType];
     if (!memorialId || !gift) return NextResponse.json({ error: "Neispravan poklon." }, { status: 400 });
