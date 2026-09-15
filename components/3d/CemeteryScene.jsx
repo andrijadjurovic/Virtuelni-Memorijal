@@ -6,6 +6,14 @@ import { ContactShadows, Html, OrbitControls, RoundedBox, Sky } from "@react-thr
 import { Bloom, EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 
+function seededScatter(count, seed, spread = 36) {
+  return Array.from({ length: count }, (_, index) => {
+    const x = Math.sin(seed * 12.9898 + index * 78.233) * 43758.5453;
+    const z = Math.sin(seed * 39.3467 + index * 17.719) * 24634.6345;
+    return [((x - Math.floor(x)) * 2 - 1) * spread, ((z - Math.floor(z)) * 2 - 1) * spread];
+  });
+}
+
 function Terrain({ weather }) {
   return (
     <group>
@@ -26,15 +34,15 @@ function Terrain({ weather }) {
       {[-28, -18, 18, 28].flatMap((z) => [-40, -30, -20, -10, 0, 10, 20, 30, 40].map((x) => <PathTile key={`tile-z-${z}-${x}`} position={[x, 0.035, z]} rotation-y={Math.PI / 2} />))}
       {[-28, -20, -12, 12, 20, 28].flatMap((x) => [-35, -25, -15, -5, 5, 15, 25, 35].map((z) => <PathTile key={`tile-x-${x}-${z}`} position={[x, 0.036, z]} />))}
       {[-32, -22, -12, 12, 22, 32].flatMap((x) => [-27, -17, 17, 27].map((z) => <PathBorder key={`border-${x}-${z}`} position={[x, 0.08, z]} rotation-y={Math.abs(x) % 2 ? Math.PI / 2 : 0} />))}
-      {Array.from({ length: 42 }).map((_, index) => <GroundPatch key={`patch-${index}`} position={[(index * 41) % 76 - 38, 0.025, (index * 53) % 76 - 38]} scale={0.7 + index % 4 * 0.22} />)}
-      {Array.from({ length: 28 }).map((_, index) => <GroundRock key={`rock-${index}`} position={[(index * 31) % 74 - 37, 0.05, (index * 43) % 74 - 37]} scale={0.5 + index % 3 * 0.2} />)}
-      {Array.from({ length: 12 }).map((_, index) => <FlowerBed key={`bed-${index}`} position={[(index * 29) % 56 - 28, 0.04, (index * 37) % 56 - 28]} />)}
-      {(weather === "rain" || weather === "storm") && Array.from({ length: 18 }).map((_, index) => <Puddle key={`puddle-${index}`} position={[(index * 17) % 60 - 30, 0.025, (index * 23) % 60 - 30]} scale={0.5 + index % 3 * 0.25} />)}
+      {seededScatter(42, 2, 38).map(([x, z], index) => <GroundPatch key={`patch-${index}`} position={[x, 0.025, z]} scale={0.7 + (index % 4) * 0.22} />)}
+      {seededScatter(28, 3, 37).map(([x, z], index) => <GroundRock key={`rock-${index}`} position={[x, 0.05, z]} scale={0.5 + (index % 3) * 0.2} />)}
+      {seededScatter(12, 4, 28).map(([x, z], index) => <FlowerBed key={`bed-${index}`} position={[x, 0.04, z]} />)}
+      {(weather === "rain" || weather === "storm") && seededScatter(18, 5, 30).map(([x, z], index) => <Puddle key={`puddle-${index}`} position={[x, 0.025, z]} scale={0.5 + (index % 3) * 0.25} />)}
       <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[7, 8, 48]} /><meshStandardMaterial color="#b5a484" roughness={1} /></mesh>
-      {Array.from({ length: 64 }).map((_, index) => <Tree key={`tree-${index}`} position={[(index * 17) % 76 - 38, 0, (index * 29) % 76 - 38]} scale={0.7 + (index % 4) * 0.12} />)}
-      {Array.from({ length: 20 }).map((_, index) => <Shrub key={`shrub-${index}`} position={[(index * 23) % 70 - 35, 0, (index * 11) % 70 - 35]} />)}
-      {Array.from({ length: 22 }).map((_, index) => <AmbientStone key={`stone-${index}`} position={[(index * 19) % 54 - 27, 0, (index * 31) % 46 - 23]} rotation={index % 2 ? 0.05 : -0.04} />)}
-      {Array.from({ length: 75 }).map((_, index) => <GrassTuft key={`grass-${index}`} position={[(index * 37) % 78 - 39, 0.02, (index * 47) % 78 - 39]} />)}
+      {seededScatter(64, 6, 38).map(([x, z], index) => <Tree key={`tree-${index}`} position={[x, 0, z]} scale={0.7 + (index % 4) * 0.12} />)}
+      {seededScatter(20, 7, 35).map(([x, z], index) => <Shrub key={`shrub-${index}`} position={[x, 0, z]} />)}
+      {seededScatter(22, 8, 27).map(([x, z], index) => <AmbientStone key={`stone-${index}`} position={[x, 0, z]} rotation={Math.sin(index * 2.4) * 0.35} />)}
+      {seededScatter(75, 9, 39).map(([x, z], index) => <GrassTuft key={`grass-${index}`} position={[x, 0.02, z]} />)}
       <Entrance />
       <Gazebo position={[26, 0, 26]} />
       <Fountain />
