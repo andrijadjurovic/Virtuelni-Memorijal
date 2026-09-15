@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Flower2, Search, SlidersHorizontal, Sparkles, TreePine, X } from "lucide-react";
 import MemorialModal from "@/components/ui/MemorialModal";
 
@@ -16,8 +16,14 @@ const memorials = [
 
 export default function Home() {
   const [selected, setSelected] = useState(null);
+  const [liveMemorials, setLiveMemorials] = useState(memorials);
   const [query, setQuery] = useState("");
   const [petOnly, setPetOnly] = useState(false);
-  const filteredMemorials = useMemo(() => memorials.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()) && (!petOnly || item.isPet)), [query, petOnly]);
+  useEffect(() => {
+    fetch("/api/memorials").then((response) => response.json()).then((data) => {
+      if (data.memorials?.length) setLiveMemorials(data.memorials);
+    }).catch(() => {});
+  }, []);
+  const filteredMemorials = useMemo(() => liveMemorials.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()) && (!petOnly || item.isPet)), [liveMemorials, query, petOnly]);
   return <main className="app-shell"><header className="topbar"><div className="brand"><div className="brand-symbol"><TreePine size={18} /></div><div><strong>Virtuelni Memorijal</strong><span>Park sećanja · Beograd</span></div></div><div className="top-actions"><span className="online"><i /> Park je otvoren</span><button className="profile-button">Moja porodica <span>JD</span></button></div></header><div className="park-stage"><div className="scene-wrap"><CemeteryScene memorials={filteredMemorials} onSelect={setSelected} /></div><div className="stage-gradient" /><div className="stage-copy"><p className="eyebrow"><Sparkles size={13} /> Prostor za sećanje</p><h1>Priče koje<br /><em>ostaju.</em></h1><p>Prošetajte kroz park i posetite ljude<br className="desktop-only" /> koji su ostavili trag.</p></div><div className="controls-hint"><span>↔</span> Prevuci za pogled <span>·</span> Klikni na spomenik</div><aside className="explorer-panel"><div className="panel-kicker">ISTRAŽI PARK <span>{filteredMemorials.length} memorijala</span></div><div className="search-box"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pronađi ime..." />{query && <button onClick={() => setQuery("")} aria-label="Obriši pretragu"><X size={15} /></button>}</div><div className="filter-row"><button className={petOnly ? "active" : ""} onClick={() => setPetOnly(!petOnly)}><Flower2 size={14} /> Pet zona</button><button><SlidersHorizontal size={14} /> Svi sektori</button></div><div className="results-list">{filteredMemorials.map((item) => <button className="result-item" key={item.id} onClick={() => setSelected(item)}><span className={`result-avatar ${item.isPet ? "pet" : ""}`}>{item.name.split(" ").map((word) => word[0]).join("").slice(0, 2)}</span><span><strong>{item.name}</strong><small>{item.isPet ? "Pet memorijal" : "Sektor Borova"}</small></span><span className="result-arrow">↗</span></button>)}</div></aside></div><MemorialModal memorial={selected} onClose={() => setSelected(null)} /></main>;
 }

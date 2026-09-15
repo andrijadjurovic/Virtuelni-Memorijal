@@ -29,6 +29,19 @@ prisma/
 
 Za lokalne Stripe webhook događaje koristiti `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
 
+## Supabase PostgreSQL
+
+Supabase je host za PostgreSQL bazu, dok Prisma ostaje ORM. U Supabase Dashboard-u napraviti novi projekat, uzeti `Project URL`, `anon key` i connection string iz Database settings, pa ih upisati u `.env` prema `.env.example`.
+
+```bash
+npx prisma generate
+npx prisma migrate dev --name init
+```
+
+API `GET /api/memorials` čita javne memorijale, timeline događaje i aktivne poklone iz PostgreSQL baze. Ako `DATABASE_URL` nije postavljen ili baza nije dostupna, početni ekran koristi lokalne demo memorijale kako bi aplikacija i dalje mogla da se pregleda.
+
+`lib/supabase/server.js` i `lib/supabase/browser.js` su spremni za Supabase Auth sesije. Za produkciju treba dodati middleware koji osvežava Auth cookies, kao i Storage bucket-e za fotografije i audio zapise.
+
 ## Napomena o podacima
 
 Početni ekran koristi lokalni seed u `app/page.js` kako bi iskustvo bilo odmah vidljivo. `Memorial`, `GiftTransaction`, `TimelineEvent` i `Condolence` modeli su spremni za zamenu seed podataka server-side upitima. Privatnost i PIN proveru treba sprovesti na serveru pre vraćanja memorijala javnom klijentu.
