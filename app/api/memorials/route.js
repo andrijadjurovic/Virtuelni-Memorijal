@@ -53,3 +53,28 @@ export async function GET() {
     return NextResponse.json({ error: "Memorijali trenutno nisu dostupni." }, { status: 503 });
   }
 }
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    const name = body.name?.trim();
+    if (!name) return NextResponse.json({ error: "Ime memorijala je obavezno." }, { status: 400 });
+
+    const memorial = await prisma.memorial.create({
+      data: {
+        name,
+        bio: body.bio?.trim() || null,
+        birthDate: body.birthDate ? new Date(`${body.birthDate}T00:00:00.000Z`) : null,
+        deathDate: body.deathDate ? new Date(`${body.deathDate}T00:00:00.000Z`) : null,
+        isPet: Boolean(body.isPet),
+        privacy: "PUBLIC",
+        positionX: Number(body.positionX) || 0,
+        positionZ: Number(body.positionZ) || 0,
+      },
+    });
+    return NextResponse.json({ memorial }, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create memorial", error);
+    return NextResponse.json({ error: "Memorijal nije moguće sačuvati." }, { status: 500 });
+  }
+}
