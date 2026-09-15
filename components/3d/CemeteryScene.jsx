@@ -177,27 +177,40 @@ function MemorialWreath({ pet }) {
   return <group position={[0, 0.78, -0.24]} rotation-x={Math.PI / 2} scale={pet ? 0.82 : 1}>{Array.from({ length: 10 }).map((_, index) => <mesh key={index} position={[Math.cos(index * 0.628) * 0.28, Math.sin(index * 0.628) * 0.28, 0]} rotation-z={index * 0.628} scale={[0.12, 0.2, 0.04]}><sphereGeometry args={[1, 10, 6]} /><meshStandardMaterial color={index % 2 ? "#5d8759" : "#789b61"} roughness={0.85} /></mesh>)}</group>;
 }
 
+function createMonumentShape() {
+  const shape = new THREE.Shape();
+  shape.moveTo(-0.58, 0);
+  shape.lineTo(-0.58, 1.42);
+  shape.quadraticCurveTo(-0.56, 1.82, 0, 1.98);
+  shape.quadraticCurveTo(0.56, 1.82, 0.58, 1.42);
+  shape.lineTo(0.58, 0);
+  shape.closePath();
+  return shape;
+}
+
+const monumentShape = createMonumentShape();
+const monumentExtrude = { depth: 0.38, bevelEnabled: true, bevelSegments: 3, bevelSize: 0.07, bevelThickness: 0.055, curveSegments: 8 };
+
+function MonumentBody({ color }) {
+  return <mesh position={[0, 0.12, 0]} castShadow><extrudeGeometry args={[monumentShape, monumentExtrude]} /><meshStandardMaterial color={color} roughness={0.72} metalness={0.04} /></mesh>;
+}
+
+function MonumentFrame() {
+  return <group position={[0, 0.86, -0.215]}><RoundedBox args={[0.78, 0.88, 0.035]} radius={0.07} smoothness={3}><meshStandardMaterial color="#655f55" roughness={0.8} /></RoundedBox><RoundedBox position-z={-0.025} args={[0.67, 0.77, 0.04]} radius={0.045} smoothness={3}><meshStandardMaterial color="#9e9888" roughness={0.75} /></RoundedBox><mesh position-y={0.22} position-z={-0.04}><boxGeometry args={[0.34, 0.025, 0.025]} /><meshStandardMaterial color="#d6c58f" emissive="#9f8145" emissiveIntensity={0.25} /></mesh><mesh position-y={0.12} position-z={-0.04}><boxGeometry args={[0.23, 0.025, 0.025]} /><meshStandardMaterial color="#d6c58f" /></mesh><mesh position-y={0.02} position-z={-0.04}><boxGeometry args={[0.31, 0.025, 0.025]} /><meshStandardMaterial color="#d6c58f" /></mesh></group>;
+}
+
+function MonumentTrim() {
+  return <group><mesh position={[0, 1.84, -0.24]} rotation-z={Math.PI / 2}><torusGeometry args={[0.43, 0.035, 8, 20, Math.PI]} /><meshStandardMaterial color="#c3af79" metalness={0.5} roughness={0.35} /></mesh><mesh position={[-0.53, 0.34, -0.23]} rotation-z={Math.PI / 2}><cylinderGeometry args={[0.035, 0.035, 0.75, 8]} /><meshStandardMaterial color="#b19c6d" metalness={0.45} /></mesh><mesh position={[0.53, 0.34, -0.23]} rotation-z={Math.PI / 2}><cylinderGeometry args={[0.035, 0.035, 0.75, 8]} /><meshStandardMaterial color="#b19c6d" metalness={0.45} /></mesh></group>;
+}
+
 function Headstone({ memorial, activeGifts, onSelect }) {
   const [hovered, setHovered] = useState(false);
   const position = [memorial.x, 0, memorial.z];
+  const stoneColor = memorial.isPet ? "#98765f" : hovered ? "#d8c8a8" : "#aaa391";
   return <group position={position} onClick={(event) => { event.stopPropagation(); onSelect(memorial); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
     <mesh position={[0, 0.12, 0.4]} rotation-x={-Math.PI / 2} receiveShadow><circleGeometry args={[1.25, 24]} /><meshStandardMaterial color="#5f7956" /></mesh>
-    <mesh position-y={0.7} castShadow scale={hovered ? 1.05 : 1}>
-      <RoundedBox args={[1.15, 1.6, 0.38]} radius={0.12} smoothness={4} />
-      <meshStandardMaterial color={memorial.isPet ? "#9b7860" : hovered ? "#d8c8a8" : "#aaa391"} roughness={0.62} flatShading />
-    </mesh>
-    <mesh position-y={1.5} castShadow>
-      <sphereGeometry args={[0.53, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
-      <meshStandardMaterial color={memorial.isPet ? "#92715f" : hovered ? "#d8c8a8" : "#afa68f"} roughness={0.75} />
-    </mesh>
-    <RoundedBox position={[0, 0.83, -0.205]} args={[0.74, 0.58, 0.025]} radius={0.06} smoothness={3}><meshStandardMaterial color="#817d70" roughness={0.8} /></RoundedBox>
-    <MemorialWreath pet={memorial.isPet} />
+    <group scale={hovered ? 1.05 : 1}><MonumentBody color={stoneColor} /><RoundedBox position-y={0.03} args={[1.48, 0.16, 0.68]} radius={0.06} smoothness={3} receiveShadow><meshStandardMaterial color="#746c5a" roughness={0.82} /></RoundedBox><RoundedBox position-y={0.15} args={[1.22, 0.1, 0.56]} radius={0.04} smoothness={3}><meshStandardMaterial color="#8b8577" roughness={0.85} /></RoundedBox><MonumentFrame /><MonumentTrim /><MemorialWreath pet={memorial.isPet} /><mesh position={[0, 0.26, -0.28]} rotation-x={-Math.PI / 2}><circleGeometry args={[0.28, 16]} /><meshStandardMaterial color="#6d8b58" /></mesh></group>
     {memorial.isPet && <group position={[0, 1.57, -0.23]}><mesh position-x={-0.23} rotation-z={-0.35}><coneGeometry args={[0.22, 0.42, 4]} /><meshStandardMaterial color="#9b7860" roughness={0.75} /></mesh><mesh position-x={0.23} rotation-z={0.35}><coneGeometry args={[0.22, 0.42, 4]} /><meshStandardMaterial color="#9b7860" roughness={0.75} /></mesh></group>}
-    <RoundedBox position-y={0.05} args={[1.45, 0.15, 0.65]} radius={0.05} smoothness={3} receiveShadow><meshStandardMaterial color="#746c5a" roughness={0.82} /></RoundedBox>
-    <mesh position={[0, 0.9, -0.21]}><boxGeometry args={[0.58, 0.08, 0.02]} /><meshStandardMaterial color="#d9c58f" emissive="#a88948" emissiveIntensity={0.35} /></mesh>
-    <mesh position={[0, 1.22, -0.22]}><boxGeometry args={[0.07, 0.38, 0.025]} /><meshStandardMaterial color="#d9c58f" /></mesh>
-    <mesh position={[0, 1.22, -0.23]}><boxGeometry args={[0.25, 0.07, 0.025]} /><meshStandardMaterial color="#d9c58f" /></mesh>
-    <mesh position={[0, 0.25, -0.28]} rotation-x={-Math.PI / 2}><circleGeometry args={[0.28, 16]} /><meshStandardMaterial color="#6d8b58" /></mesh>
     {activeGifts.map((gift) => <GiftProp key={gift.id} type={gift.giftType} position={[0, 0, 0]} />)}
     {hovered && <Html position={[0, 2.7, 0]} center distanceFactor={8}><div className="scene-preview"><span>{memorial.isPet ? "PET MEMORIJAL" : "MEMORIJAL"}</span><strong>{memorial.name}</strong><small>Otvori sećanje →</small></div></Html>}
   </group>;
