@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls, Sky } from "@react-three/drei";
 import * as THREE from "three";
@@ -129,14 +129,33 @@ function CameraFocus({ target }) {
   return null;
 }
 
-export default function CemeteryScene({ memorials, onSelect }) {
+function WeatherEffects({ weather }) {
+  const leaves = useRef();
+  const rain = useRef();
+  const lightning = useRef();
+  useFrame((state, delta) => {
+    const windStrength = weather === "wind" || weather === "storm" ? 1 : 0.2;
+    if (leaves.current) leaves.current.children.forEach((leaf, index) => { leaf.position.x += delta * windStrength * (0.8 + index % 3 * 0.2); leaf.position.y -= delta * (0.12 + index % 4 * 0.03); leaf.rotation.z += delta * 2; if (leaf.position.x > 40) leaf.position.x = -40; if (leaf.position.y < 0.2) leaf.position.y = 8 + index % 5; });
+    if (rain.current) rain.current.children.forEach((drop) => { drop.position.y -= delta * (weather === "storm" ? 18 : 12); drop.position.x += delta * (weather === "storm" ? 2.2 : 0.4); if (drop.position.y < 0) { drop.position.y = 18; drop.position.x = (drop.position.x + 40) % 80 - 40; } });
+    if (lightning.current) lightning.current.intensity = weather === "storm" && Math.sin(state.clock.elapsedTime * 1.7) > 0.94 ? 5 : 0;
+  });
+  return <>
+    {(weather === "wind" || weather === "storm") && <group ref={leaves}>{Array.from({ length: 38 }).map((_, index) => <mesh key={index} position={[(index * 23) % 80 - 40, 2 + index % 6, (index * 17) % 70 - 35]} rotation={[0.4, 0, index]}><planeGeometry args={[0.16, 0.28]} /><meshStandardMaterial color={index % 2 ? "#b57a43" : "#d19a54"} side={THREE.DoubleSide} /></mesh>)}</group>}
+    {(weather === "rain" || weather === "storm") && <group ref={rain}>{Array.from({ length: 130 }).map((_, index) => <mesh key={index} position={[(index * 19) % 80 - 40, 4 + index % 15, (index * 31) % 80 - 40]} rotation-z={-0.16}><cylinderGeometry args={[0.012, 0.012, 0.7, 5]} /><meshBasicMaterial color="#bdd8df" transparent opacity={0.55} /></mesh>)}</group>}
+    <pointLight ref={lightning} position={[0, 16, 0]} color="#d6e8ff" intensity={0} distance={60} />
+  </>;
+}
+
+export default function CemeteryScene({ memorials, onSelect, weather = "sun" }) {
   const [focused, setFocused] = useState(null);
   return <Canvas shadows dpr={[1, 1.5]} camera={{ position: [11, 8, 15], fov: 42 }} onPointerMissed={() => setFocused(null)} onCreated={({ gl, scene }) => { gl.setClearColor("#a8c5c1"); gl.shadowMap.type = THREE.PCFSoftShadowMap; scene.fog = new THREE.Fog("#a8c5c1", 36, 86); }}>
-    <ambientLight intensity={0.48} color="#dce8d6" />
-    <hemisphereLight color="#dcebe1" groundColor="#304b38" intensity={0.7} />
-    <directionalLight castShadow position={[-12, 18, -10]} intensity={2.4} color="#fff0c5" shadow-mapSize={[2048, 2048]} shadow-bias={-0.0002} />
-    <Sky sunPosition={[-4, 5, -10]} turbidity={5} rayleigh={1.8} mieCoefficient={0.015} />
+    <fog attach="fog" args={[weather === "fog" ? "#a9b7b2" : weather === "storm" ? "#53636a" : "#a8c5c1", weather === "fog" ? 8 : 36, weather === "fog" ? 42 : 86]} />
+    <ambientLight intensity={weather === "storm" ? 0.22 : weather === "fog" ? 0.38 : 0.48} color="#dce8d6" />
+    <hemisphereLight color="#dcebe1" groundColor="#304b38" intensity={weather === "storm" ? 0.42 : 0.7} />
+    <directionalLight castShadow position={[-12, 18, -10]} intensity={weather === "storm" ? 0.75 : weather === "fog" ? 1.1 : 2.4} color={weather === "storm" ? "#b8c7db" : "#fff0c5"} shadow-mapSize={[2048, 2048]} shadow-bias={-0.0002} />
+    <Sky sunPosition={[-4, 5, -10]} turbidity={weather === "fog" ? 12 : weather === "storm" ? 18 : 5} rayleigh={weather === "fog" ? 2.5 : 1.8} mieCoefficient={weather === "fog" ? 0.08 : 0.015} />
     <Terrain />
+    <WeatherEffects weather={weather} />
     {memorials.map((memorial) => <Headstone key={memorial.id} memorial={memorial} activeGifts={memorial.gifts.filter((gift) => new Date(gift.activeUntil) > new Date())} onSelect={(item) => { setFocused(item); onSelect(item); }} />)}
     <CameraFocus target={focused} />
     <OrbitControls enablePan enableDamping dampingFactor={0.08} maxPolarAngle={Math.PI / 2.15} minDistance={5} maxDistance={34} target={[0, 1, 0]} />
