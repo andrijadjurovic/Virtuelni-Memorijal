@@ -23,10 +23,13 @@ prisma/
 
 ## Pokretanje
 
-1. Kopirati `.env.example` u `.env` i uneti PostgreSQL i Stripe vrednosti.
-2. Pokrenuti `npx prisma generate`, `npm run db:deploy` i `npm run db:seed` kada je baza dostupna.
-3. U Supabase SQL Editor-u izvršiti `supabase/migrations/20260915000000_enable_rls.sql`.
-4. Pokrenuti `npm run dev` i otvoriti `http://localhost:3000`.
+1. Otvoriti `https://supabase.com`, napraviti nalog i izabrati `New project`.
+2. U `Project Settings > Database` kopirati connection string za `URI` i u njemu zameniti `[YOUR-PASSWORD]` svojom Supabase lozinkom.
+3. U `Project Settings > API` kopirati `Project URL` i `anon public key`.
+4. Kopirati `.env.example` u `.env` i uneti te tri vrednosti.
+5. Pokrenuti `npx prisma generate`, `npm run db:deploy` i `npm run db:seed`.
+6. U Supabase SQL Editor-u izvršiti `supabase/migrations/20260915000000_enable_rls.sql`.
+7. Pokrenuti `npm run dev` i otvoriti `http://localhost:3000`.
 
 Za lokalne Stripe webhook događaje koristiti `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
 
@@ -39,6 +42,8 @@ npx prisma generate
 npm run db:deploy
 npm run db:seed
 ```
+
+`prisma/migrations/20260915000001_init/migration.sql` automatski kreira sve tabele. `prisma/seed.js` automatski ubacuje četiri demo memorijala, timeline događaje i aktivne digitalne poklone, tako da nije potrebno ručno unositi podatke.
 
 API `GET /api/memorials` čita javne memorijale, timeline događaje i aktivne poklone iz PostgreSQL baze. Ako `DATABASE_URL` nije postavljen ili baza nije dostupna, početni ekran koristi lokalne demo memorijale kako bi aplikacija i dalje mogla da se pregleda.
 
