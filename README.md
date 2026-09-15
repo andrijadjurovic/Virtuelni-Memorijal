@@ -24,8 +24,9 @@ prisma/
 ## Pokretanje
 
 1. Kopirati `.env.example` u `.env` i uneti PostgreSQL i Stripe vrednosti.
-2. Pokrenuti `npx prisma generate` i zatim `npx prisma migrate dev --name init` kada je baza dostupna.
-3. Pokrenuti `npm run dev` i otvoriti `http://localhost:3000`.
+2. Pokrenuti `npx prisma generate`, `npm run db:deploy` i `npm run db:seed` kada je baza dostupna.
+3. U Supabase SQL Editor-u izvršiti `supabase/migrations/20260915000000_enable_rls.sql`.
+4. Pokrenuti `npm run dev` i otvoriti `http://localhost:3000`.
 
 Za lokalne Stripe webhook događaje koristiti `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
 
@@ -35,12 +36,13 @@ Supabase je host za PostgreSQL bazu, dok Prisma ostaje ORM. U Supabase Dashboard
 
 ```bash
 npx prisma generate
-npx prisma migrate dev --name init
+npm run db:deploy
+npm run db:seed
 ```
 
 API `GET /api/memorials` čita javne memorijale, timeline događaje i aktivne poklone iz PostgreSQL baze. Ako `DATABASE_URL` nije postavljen ili baza nije dostupna, početni ekran koristi lokalne demo memorijale kako bi aplikacija i dalje mogla da se pregleda.
 
-`lib/supabase/server.js` i `lib/supabase/browser.js` su spremni za Supabase Auth sesije. Za produkciju treba dodati middleware koji osvežava Auth cookies, kao i Storage bucket-e za fotografije i audio zapise.
+`lib/supabase/server.js`, `lib/supabase/browser.js` i `proxy.js` održavaju Supabase Auth sesije. RLS pravila su u `supabase/migrations/20260915000000_enable_rls.sql`. Storage bucket-i za fotografije i audio zapise mogu se dodati u Supabase Storage dashboard-u kada upload workflow bude aktiviran.
 
 ## Napomena o podacima
 
