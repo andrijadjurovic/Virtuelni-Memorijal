@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls, Sky } from "@react-three/drei";
 import * as THREE from "three";
 
-function Terrain() {
+function Terrain({ weather }) {
   return (
     <group>
       <mesh rotation-x={-Math.PI / 2} receiveShadow>
@@ -24,6 +24,11 @@ function Terrain() {
       {[-28, -18, 18, 28].map((z) => <mesh key={`path-z-${z}`} rotation-x={-Math.PI / 2} position={[0, 0.018, z]}><planeGeometry args={[90, 2]} /><meshStandardMaterial color="#788b6e" roughness={1} /></mesh>)}
       {[-28, -18, 18, 28].flatMap((z) => [-40, -30, -20, -10, 0, 10, 20, 30, 40].map((x) => <PathTile key={`tile-z-${z}-${x}`} position={[x, 0.035, z]} rotation-y={Math.PI / 2} />))}
       {[-28, -20, -12, 12, 20, 28].flatMap((x) => [-35, -25, -15, -5, 5, 15, 25, 35].map((z) => <PathTile key={`tile-x-${x}-${z}`} position={[x, 0.036, z]} />))}
+      {[-32, -22, -12, 12, 22, 32].flatMap((x) => [-27, -17, 17, 27].map((z) => <PathBorder key={`border-${x}-${z}`} position={[x, 0.08, z]} rotation-y={Math.abs(x) % 2 ? Math.PI / 2 : 0} />))}
+      {Array.from({ length: 42 }).map((_, index) => <GroundPatch key={`patch-${index}`} position={[(index * 41) % 76 - 38, 0.025, (index * 53) % 76 - 38]} scale={0.7 + index % 4 * 0.22} />)}
+      {Array.from({ length: 28 }).map((_, index) => <GroundRock key={`rock-${index}`} position={[(index * 31) % 74 - 37, 0.05, (index * 43) % 74 - 37]} scale={0.5 + index % 3 * 0.2} />)}
+      {Array.from({ length: 12 }).map((_, index) => <FlowerBed key={`bed-${index}`} position={[(index * 29) % 56 - 28, 0.04, (index * 37) % 56 - 28]} />)}
+      {(weather === "rain" || weather === "storm") && Array.from({ length: 18 }).map((_, index) => <Puddle key={`puddle-${index}`} position={[(index * 17) % 60 - 30, 0.025, (index * 23) % 60 - 30]} scale={0.5 + index % 3 * 0.25} />)}
       <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[7, 8, 48]} /><meshStandardMaterial color="#b5a484" roughness={1} /></mesh>
       {Array.from({ length: 64 }).map((_, index) => <Tree key={`tree-${index}`} position={[(index * 17) % 76 - 38, 0, (index * 29) % 76 - 38]} scale={0.7 + (index % 4) * 0.12} />)}
       {Array.from({ length: 20 }).map((_, index) => <Shrub key={`shrub-${index}`} position={[(index * 23) % 70 - 35, 0, (index * 11) % 70 - 35]} />)}
@@ -41,6 +46,26 @@ function Terrain() {
 
 function PathTile({ position, rotation }) {
   return <mesh position={position} rotation-y={rotation} receiveShadow><boxGeometry args={[1.65, 0.06, 1.25]} /><meshStandardMaterial color="#a69b82" roughness={1} /></mesh>;
+}
+
+function PathBorder({ position, rotation }) {
+  return <mesh position={position} rotation-y={rotation} castShadow><boxGeometry args={[0.22, 0.18, 2.4]} /><meshStandardMaterial color="#6d7564" roughness={0.95} /></mesh>;
+}
+
+function GroundPatch({ position, scale }) {
+  return <group position={position} scale={scale}><mesh rotation-x={-Math.PI / 2} receiveShadow><circleGeometry args={[1.35, 12]} /><meshStandardMaterial color="#355943" roughness={1} /></mesh><mesh position={[0.25, 0.015, -0.2]} rotation-x={-Math.PI / 2}><circleGeometry args={[0.5, 10]} /><meshStandardMaterial color="#496c48" roughness={1} /></mesh></group>;
+}
+
+function GroundRock({ position, scale }) {
+  return <mesh position={position} scale={scale} rotation={[0.1, position[0] * 0.1, 0.2]} castShadow><dodecahedronGeometry args={[0.35, 1]} /><meshStandardMaterial color="#77796b" roughness={0.95} flatShading /></mesh>;
+}
+
+function FlowerBed({ position }) {
+  return <group position={position}>{Array.from({ length: 7 }).map((_, index) => <group key={index} position={[(index % 3) * 0.28 - 0.28, 0, Math.floor(index / 3) * 0.3 - 0.3]}><mesh position-y={0.22}><cylinderGeometry args={[0.018, 0.025, 0.42, 5]} /><meshStandardMaterial color="#58734b" /></mesh><mesh position-y={0.44} scale={[0.11, 0.06, 0.11]}><sphereGeometry args={[1, 8, 6]} /><meshStandardMaterial color={index % 2 ? "#d88c85" : "#e5bd72" } /></mesh></group>)}</group>;
+}
+
+function Puddle({ position, scale }) {
+  return <mesh position={position} rotation-x={-Math.PI / 2} scale={scale}><circleGeometry args={[1, 16]} /><meshPhysicalMaterial color="#72999a" transparent opacity={0.42} roughness={0.08} metalness={0.15} clearcoat={1} /></mesh>;
 }
 
 function GrassTuft({ position }) {
@@ -154,7 +179,7 @@ export default function CemeteryScene({ memorials, onSelect, weather = "sun" }) 
     <hemisphereLight color="#dcebe1" groundColor="#304b38" intensity={weather === "storm" ? 0.42 : 0.7} />
     <directionalLight castShadow position={[-12, 18, -10]} intensity={weather === "storm" ? 0.75 : weather === "fog" ? 1.1 : 2.4} color={weather === "storm" ? "#b8c7db" : "#fff0c5"} shadow-mapSize={[2048, 2048]} shadow-bias={-0.0002} />
     <Sky sunPosition={[-4, 5, -10]} turbidity={weather === "fog" ? 12 : weather === "storm" ? 18 : 5} rayleigh={weather === "fog" ? 2.5 : 1.8} mieCoefficient={weather === "fog" ? 0.08 : 0.015} />
-    <Terrain />
+    <Terrain weather={weather} />
     <WeatherEffects weather={weather} />
     {memorials.map((memorial) => <Headstone key={memorial.id} memorial={memorial} activeGifts={memorial.gifts.filter((gift) => new Date(gift.activeUntil) > new Date())} onSelect={(item) => { setFocused(item); onSelect(item); }} />)}
     <CameraFocus target={focused} />
