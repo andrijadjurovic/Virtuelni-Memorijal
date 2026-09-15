@@ -22,10 +22,13 @@ function Terrain() {
       </mesh>
       {[-28, -20, -12, 12, 20, 28].map((x) => <mesh key={`path-x-${x}`} rotation-x={-Math.PI / 2} position={[x, 0.016, 0]}><planeGeometry args={[2, 90]} /><meshStandardMaterial color="#788b6e" roughness={1} /></mesh>)}
       {[-28, -18, 18, 28].map((z) => <mesh key={`path-z-${z}`} rotation-x={-Math.PI / 2} position={[0, 0.018, z]}><planeGeometry args={[90, 2]} /><meshStandardMaterial color="#788b6e" roughness={1} /></mesh>)}
+      {[-28, -18, 18, 28].flatMap((z) => [-40, -30, -20, -10, 0, 10, 20, 30, 40].map((x) => <PathTile key={`tile-z-${z}-${x}`} position={[x, 0.035, z]} rotation-y={Math.PI / 2} />))}
+      {[-28, -20, -12, 12, 20, 28].flatMap((x) => [-35, -25, -15, -5, 5, 15, 25, 35].map((z) => <PathTile key={`tile-x-${x}-${z}`} position={[x, 0.036, z]} />))}
       <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[7, 8, 48]} /><meshStandardMaterial color="#b5a484" roughness={1} /></mesh>
       {Array.from({ length: 64 }).map((_, index) => <Tree key={`tree-${index}`} position={[(index * 17) % 76 - 38, 0, (index * 29) % 76 - 38]} scale={0.7 + (index % 4) * 0.12} />)}
       {Array.from({ length: 20 }).map((_, index) => <Shrub key={`shrub-${index}`} position={[(index * 23) % 70 - 35, 0, (index * 11) % 70 - 35]} />)}
       {Array.from({ length: 22 }).map((_, index) => <AmbientStone key={`stone-${index}`} position={[(index * 19) % 54 - 27, 0, (index * 31) % 46 - 23]} rotation={index % 2 ? 0.05 : -0.04} />)}
+      {Array.from({ length: 75 }).map((_, index) => <GrassTuft key={`grass-${index}`} position={[(index * 37) % 78 - 39, 0.02, (index * 47) % 78 - 39]} />)}
       <Entrance />
       <Gazebo position={[26, 0, 26]} />
       <Fountain />
@@ -34,6 +37,14 @@ function Terrain() {
       {[-24, -12, 0, 12, 24].map((x) => <Lantern key={`lantern-b-${x}`} position={[x, 0, 6]} />)}
     </group>
   );
+}
+
+function PathTile({ position, rotation }) {
+  return <mesh position={position} rotation-y={rotation} receiveShadow><boxGeometry args={[1.65, 0.06, 1.25]} /><meshStandardMaterial color="#a69b82" roughness={1} /></mesh>;
+}
+
+function GrassTuft({ position }) {
+  return <group position={position} rotation-y={(position[0] + position[2]) % 3}><mesh rotation-z={-0.25} position-x={-0.06}><coneGeometry args={[0.025, 0.32, 4]} /><meshStandardMaterial color="#608054" /></mesh><mesh rotation-z={0.25} position-x={0.06}><coneGeometry args={[0.025, 0.27, 4]} /><meshStandardMaterial color="#78935c" /></mesh></group>;
 }
 
 function Tree({ position, scale = 1 }) {
@@ -69,12 +80,17 @@ function Gazebo({ position }) {
 }
 
 function GiftProp({ type, position }) {
+  const flame = useRef();
+  useFrame((state) => {
+    if (flame.current) flame.current.scale.setScalar(0.9 + Math.sin(state.clock.elapsedTime * 8) * 0.12);
+  });
   const [x, y, z] = position;
-  if (type === "FLOWER_BOUQUET") return <mesh position={[x + 0.7, y + 0.5, z]}><sphereGeometry args={[0.32, 12, 8]} /><meshStandardMaterial color="#d98783" emissive="#5d2628" emissiveIntensity={0.2} /></mesh>;
+  if (type === "FLOWER_BOUQUET") return <group position={[x + 0.7, y + 0.35, z]}><mesh position-y={0.22}><cylinderGeometry args={[0.12, 0.17, 0.45, 10]} /><meshStandardMaterial color="#6b8b58" roughness={0.9} /></mesh>{[0, 1, 2, 3, 4].map((petal) => <mesh key={petal} position={[Math.cos(petal * 1.256) * 0.2, 0.58 + (petal % 2) * 0.05, Math.sin(petal * 1.256) * 0.2]} scale={[0.14, 0.08, 0.14]}><sphereGeometry args={[1, 10, 6]} /><meshStandardMaterial color={petal % 2 ? "#d88982" : "#e8ad91"} roughness={0.75} /></mesh>)}<mesh position-y={0.58}><sphereGeometry args={[0.11, 10, 6]} /><meshStandardMaterial color="#d6b25e" /></mesh></group>;
   return <group position={[x + 0.65, y + 0.4, z]}>
-    <mesh><cylinderGeometry args={[0.16, 0.18, 0.45, 12]} /><meshStandardMaterial color="#eee1bd" /></mesh>
+    <mesh castShadow><cylinderGeometry args={[0.16, 0.2, 0.45, 16]} /><meshStandardMaterial color="#e8d9b3" roughness={0.6} /></mesh>
+    <mesh position-y={0.23}><torusGeometry args={[0.14, 0.025, 8, 16]} /><meshStandardMaterial color="#b9965f" metalness={0.55} roughness={0.3} /></mesh>
     <pointLight color="#ffad56" intensity={1.5} distance={3} />
-    <mesh position-y={0.34}><coneGeometry args={[0.11, 0.28, 8]} /><meshStandardMaterial color="#ffb24a" emissive="#ff7b24" emissiveIntensity={1.5} /></mesh>
+    <mesh ref={flame} position-y={0.42}><coneGeometry args={[0.1, 0.3, 8]} /><meshStandardMaterial color="#ffb24a" emissive="#ff7b24" emissiveIntensity={1.8 } /></mesh>
   </group>;
 }
 
@@ -85,7 +101,7 @@ function Headstone({ memorial, activeGifts, onSelect }) {
     <mesh position={[0, 0.12, 0.4]} rotation-x={-Math.PI / 2} receiveShadow><circleGeometry args={[1.25, 24]} /><meshStandardMaterial color="#5f7956" /></mesh>
     <mesh position-y={0.7} castShadow scale={hovered ? 1.05 : 1}>
       <boxGeometry args={[1.15, 1.6, 0.38]} />
-      <meshStandardMaterial color={memorial.isPet ? "#9b7860" : hovered ? "#d8c8a8" : "#aaa391"} roughness={0.62} />
+      <meshStandardMaterial color={memorial.isPet ? "#9b7860" : hovered ? "#d8c8a8" : "#aaa391"} roughness={0.62} flatShading />
     </mesh>
     <mesh position-y={1.5} castShadow>
       <sphereGeometry args={[0.53, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
@@ -95,6 +111,7 @@ function Headstone({ memorial, activeGifts, onSelect }) {
     <mesh position={[0, 0.9, -0.21]}><boxGeometry args={[0.58, 0.08, 0.02]} /><meshStandardMaterial color="#d9c58f" emissive="#a88948" emissiveIntensity={0.35} /></mesh>
     <mesh position={[0, 1.22, -0.22]}><boxGeometry args={[0.07, 0.38, 0.025]} /><meshStandardMaterial color="#d9c58f" /></mesh>
     <mesh position={[0, 1.22, -0.23]}><boxGeometry args={[0.25, 0.07, 0.025]} /><meshStandardMaterial color="#d9c58f" /></mesh>
+    <mesh position={[0, 0.25, -0.28]} rotation-x={-Math.PI / 2}><circleGeometry args={[0.28, 16]} /><meshStandardMaterial color="#6d8b58" /></mesh>
     {activeGifts.map((gift) => <GiftProp key={gift.id} type={gift.giftType} position={[0, 0, 0]} />)}
     {hovered && <Html position={[0, 2.7, 0]} center distanceFactor={8}><div className="scene-preview"><span>{memorial.isPet ? "PET MEMORIJAL" : "MEMORIJAL"}</span><strong>{memorial.name}</strong><small>Otvori sećanje →</small></div></Html>}
   </group>;
