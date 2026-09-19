@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Html, OrbitControls, RoundedBox, Sky } from "@react-three/drei";
 import { Bloom, EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
@@ -14,6 +14,22 @@ function seededScatter(count, seed, spread = 36) {
   });
 }
 
+function createTerrainGeometry() {
+  const geometry = new THREE.PlaneGeometry(90, 90, 80, 80);
+  const position = geometry.attributes.position;
+
+  for (let index = 0; index < position.count; index += 1) {
+    const x = position.getX(index);
+    const y = position.getY(index);
+    const contour = Math.sin(x * 0.42) * 0.34 + Math.cos(y * 0.36) * 0.28 + Math.sin((x + y) * 0.18) * 0.24;
+    const mound = Math.max(0, 1 - (Math.abs(x) + Math.abs(y)) / 58) * 0.22;
+    position.setZ(index, contour + mound);
+  }
+
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 function Terrain({ weather, detail = 1 }) {
   const counts = {
     patches: detail === 1 ? 42 : 20,
@@ -24,11 +40,14 @@ function Terrain({ weather, detail = 1 }) {
     stones: detail === 1 ? 22 : 10,
     grass: detail === 1 ? 75 : 28,
   };
+
+  const terrainGeometry = useMemo(() => createTerrainGeometry(), []);
+  const soilPatches = useMemo(() => seededScatter(28, 11, 40), []);
+
   return (
     <group>
-      <mesh rotation-x={-Math.PI / 2} receiveShadow>
-        <planeGeometry args={[90, 90, 40, 40]} />
-        <meshStandardMaterial color="#294333" roughness={1} />
+      <mesh geometry={terrainGeometry} rotation-x={-Math.PI / 2} receiveShadow>
+        <meshStandardMaterial color="#2e4d39" roughness={1} />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position-y={0.012} receiveShadow>
         <planeGeometry args={[7, 90]} />
@@ -38,6 +57,12 @@ function Terrain({ weather, detail = 1 }) {
         <planeGeometry args={[90, 7]} />
         <meshStandardMaterial color="#c5b89b" roughness={0.9} />
       </mesh>
+      {soilPatches.map(([x, z], index) => (
+        <mesh key={`soil-${index}`} position={[x, 0.028 + (index % 3) * 0.009, z]} rotation-x={-Math.PI / 2} scale={0.9 + (index % 4) * 0.25} receiveShadow>
+          <circleGeometry args={[1.2, 16]} />
+          <meshStandardMaterial color={index % 3 === 0 ? "#4c684d" : index % 3 === 1 ? "#5e7857" : "#49684a"} roughness={1} />
+        </mesh>
+      ))}
       {[-28, -20, -12, 12, 20, 28].map((x) => <mesh key={`path-x-${x}`} rotation-x={-Math.PI / 2} position={[x, 0.016, 0]}><planeGeometry args={[2, 90]} /><meshStandardMaterial color="#788b6e" roughness={1} /></mesh>)}
       {[-28, -18, 18, 28].map((z) => <mesh key={`path-z-${z}`} rotation-x={-Math.PI / 2} position={[0, 0.018, z]}><planeGeometry args={[90, 2]} /><meshStandardMaterial color="#788b6e" roughness={1} /></mesh>)}
       {[-28, -18, 18, 28].flatMap((z) => [-40, -30, -20, -10, 0, 10, 20, 30, 40].map((x) => <PathTile key={`tile-z-${z}-${x}`} position={[x, 0.035, z]} rotation-y={Math.PI / 2} />))}
@@ -219,11 +244,15 @@ function Headstone({ memorial, activeGifts, onSelect }) {
 function CameraFocus({ target }) {
   const { camera } = useThree();
   const goal = useRef(new THREE.Vector3());
+  const lookTarget = useRef(new THREE.Vector3());
+
   useFrame(() => {
     if (!target) return;
-    goal.current.set(target.x + 4, 3.1, target.z + 5);
-    camera.position.lerp(goal.current, 0.035);
-    camera.lookAt(target.x, 1, target.z);
+    goal.current.set(target.x, 2.35, target.z + 5.8);
+    lookTarget.current.set(target.x, 0.95, target.z - 0.15);
+
+    camera.position.lerp(goal.current, 0.05);
+    camera.lookAt(lookTarget.current);
   });
   return null;
 }
