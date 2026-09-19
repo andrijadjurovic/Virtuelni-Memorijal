@@ -247,7 +247,14 @@ function CameraFocus({ target }) {
   const lookTarget = useRef(new THREE.Vector3());
 
   useFrame(() => {
-    if (!target) return;
+    if (!target) {
+      goal.current.set(11, 8, 15);
+      lookTarget.current.set(0, 1, 0);
+      camera.position.lerp(goal.current, 0.06);
+      camera.lookAt(lookTarget.current);
+      return;
+    }
+
     goal.current.set(target.x, 2.35, target.z - 5.8);
     lookTarget.current.set(target.x, 0.95, target.z + 0.15);
 
