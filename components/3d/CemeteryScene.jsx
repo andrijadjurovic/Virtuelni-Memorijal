@@ -274,10 +274,13 @@ function WeatherEffects({ weather, detail = 1 }) {
   </>;
 }
 
-export default function CemeteryScene({ memorials, onSelect, weather = "sun" }) {
+export default function CemeteryScene({ memorials, onSelect, selectedMemorial, weather = "sun" }) {
   const [focused, setFocused] = useState(null);
   const [lowPower] = useState(() => typeof window !== "undefined" && (window.matchMedia("(max-width: 720px").matches || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4)));
   const detail = lowPower ? 0 : 1;
+  useEffect(() => {
+    if (!selectedMemorial) setFocused(null);
+  }, [selectedMemorial]);
   return <Canvas shadows={!lowPower} dpr={lowPower ? 1 : [1, 1.5]} gl={{ antialias: !lowPower, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }} camera={{ position: [11, 8, 15], fov: 42 }} onPointerMissed={() => setFocused(null)} onCreated={({ gl, scene }) => { gl.setClearColor("#a8c5c1"); gl.shadowMap.type = THREE.PCFSoftShadowMap; scene.fog = new THREE.Fog("#a8c5c1", 36, 86); }}>
     <fog attach="fog" args={[weather === "fog" ? "#a9b7b2" : weather === "storm" ? "#53636a" : "#a8c5c1", weather === "fog" ? 8 : 36, weather === "fog" ? 42 : 86]} />
     <ambientLight intensity={weather === "storm" ? 0.22 : weather === "fog" ? 0.38 : 0.48} color="#dce8d6" />
