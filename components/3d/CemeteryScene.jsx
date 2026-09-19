@@ -281,23 +281,23 @@ function WeatherEffects({ weather, detail = 1 }) {
   </>;
 }
 
-export default function CemeteryScene({ memorials, onSelect, selectedMemorial, weather = "sun" }) {
+export default function CemeteryScene({ memorials, onSelect, resetCameraKey = 0, weather = "sun" }) {
   const [focused, setFocused] = useState(null);
   const [focusAnimating, setFocusAnimating] = useState(false);
   const [resetToDefault, setResetToDefault] = useState(false);
   const controls = useRef();
-  const previousSelected = useRef(selectedMemorial);
+  const previousResetKey = useRef(resetCameraKey);
   const [lowPower] = useState(() => typeof window !== "undefined" && (window.matchMedia("(max-width: 720px").matches || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4)));
   const detail = lowPower ? 0 : 1;
   useEffect(() => {
-    if (previousSelected.current && !selectedMemorial) {
+    if (resetCameraKey !== previousResetKey.current) {
       setFocused(null);
       setFocusAnimating(false);
       setResetToDefault(true);
       controls.current?.reset();
     }
-    previousSelected.current = selectedMemorial;
-  }, [selectedMemorial]);
+    previousResetKey.current = resetCameraKey;
+  }, [resetCameraKey]);
   return <Canvas shadows={!lowPower} dpr={lowPower ? 1 : [1, 1.5]} gl={{ antialias: !lowPower, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }} camera={{ position: [11, 8, 15], fov: 42 }} onCreated={({ gl, scene }) => { gl.setClearColor("#a8c5c1"); gl.shadowMap.type = THREE.PCFSoftShadowMap; scene.fog = new THREE.Fog("#a8c5c1", 36, 86); }}>
     <fog attach="fog" args={[weather === "fog" ? "#a9b7b2" : weather === "storm" ? "#53636a" : "#a8c5c1", weather === "fog" ? 8 : 36, weather === "fog" ? 42 : 86]} />
     <ambientLight intensity={weather === "storm" ? 0.22 : weather === "fog" ? 0.38 : 0.48} color="#dce8d6" />

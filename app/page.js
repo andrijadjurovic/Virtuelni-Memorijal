@@ -27,6 +27,7 @@ const weatherOptions = [
 
 export default function Home() {
   const [selected, setSelected] = useState(null);
+  const [resetCameraKey, setResetCameraKey] = useState(0);
   const [liveMemorials, setLiveMemorials] = useState(memorials);
   const [query, setQuery] = useState("");
   const [petOnly, setPetOnly] = useState(false);
@@ -47,13 +48,13 @@ export default function Home() {
       <div className="top-actions"><span className="online"><i /> Park je otvoren</span><a className="profile-button" href="/dashboard">Moja porodica <span>JD</span></a></div>
     </header>
     <div className="park-stage">
-      <div className="scene-wrap"><CemeteryScene memorials={filteredMemorials} selectedMemorial={selected} weather={weather} onSelect={setSelected} /></div>
+      <div className="scene-wrap"><CemeteryScene memorials={filteredMemorials} resetCameraKey={resetCameraKey} weather={weather} onSelect={setSelected} /></div>
       <div className="stage-gradient" />
       <div className="stage-copy"><p className="eyebrow"><Sparkles size={13} /> Prostor za secanje</p><h1>Price koje<br /><em>ostaju.</em></h1><p>Prosetajte kroz park i posetite ljude<br className="desktop-only" /> koji su ostavili trag.</p></div>
       <div className="controls-hint"><span>↔</span> Prevuci za pogled <span>·</span> Klikni na spomenik</div>
       <div className="weather-panel"><div className="weather-heading"><span>ATMOSFERA PARKA</span><strong>{activeWeather?.label}</strong></div><div className="weather-options">{weatherOptions.map(({ id, label, icon: Icon }) => <button key={id} className={weather === id ? "active" : ""} onClick={() => setWeather(id)} aria-label={`Izaberi vreme: ${label}`}><Icon size={15} /><small>{label}</small></button>)}</div></div>
       <aside className="explorer-panel"><div className="panel-kicker">ISTRAZI PARK <span>{filteredMemorials.length} memorijala</span></div><div className="search-box"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pronadi ime..." />{query && <button onClick={() => setQuery("")} aria-label="Obrisi pretragu"><X size={15} /></button>}</div><div className="filter-row"><button className={petOnly ? "active" : ""} onClick={() => setPetOnly(!petOnly)}><Flower2 size={14} /> Pet zona</button><button><SlidersHorizontal size={14} /> Svi sektori</button></div><div className="results-list">{filteredMemorials.map((item) => <button className="result-item" key={item.id} onClick={() => setSelected(item)}><span className={`result-avatar ${item.isPet ? "pet" : ""}`}>{item.name.split(" ").map((word) => word[0]).join("").slice(0, 2)}</span><span><strong>{item.name}</strong><small>{item.isPet ? "Pet memorijal" : "Sektor Borova"}</small></span><span className="result-arrow">↗</span></button>)}</div></aside>
     </div>
-    <MemorialModal memorial={selected} onClose={() => setSelected(null)} />
+    <MemorialModal memorial={selected} onClose={() => { setSelected(null); setResetCameraKey((value) => value + 1); }} />
   </main>;
 }
