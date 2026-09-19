@@ -296,7 +296,7 @@ export default function CemeteryScene({ memorials, onSelect, selectedMemorial, w
       controls.current?.reset();
     }
   }, [selectedMemorial]);
-  return <Canvas shadows={!lowPower} dpr={lowPower ? 1 : [1, 1.5]} gl={{ antialias: !lowPower, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }} camera={{ position: [11, 8, 15], fov: 42 }} onPointerMissed={() => { setFocusAnimating(false); setResetToDefault(false); }} onCreated={({ gl, scene }) => { gl.setClearColor("#a8c5c1"); gl.shadowMap.type = THREE.PCFSoftShadowMap; scene.fog = new THREE.Fog("#a8c5c1", 36, 86); }}>
+  return <Canvas shadows={!lowPower} dpr={lowPower ? 1 : [1, 1.5]} gl={{ antialias: !lowPower, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }} camera={{ position: [11, 8, 15], fov: 42 }} onCreated={({ gl, scene }) => { gl.setClearColor("#a8c5c1"); gl.shadowMap.type = THREE.PCFSoftShadowMap; scene.fog = new THREE.Fog("#a8c5c1", 36, 86); }}>
     <fog attach="fog" args={[weather === "fog" ? "#a9b7b2" : weather === "storm" ? "#53636a" : "#a8c5c1", weather === "fog" ? 8 : 36, weather === "fog" ? 42 : 86]} />
     <ambientLight intensity={weather === "storm" ? 0.22 : weather === "fog" ? 0.38 : 0.48} color="#dce8d6" />
     <hemisphereLight color="#dcebe1" groundColor="#304b38" intensity={weather === "storm" ? 0.42 : 0.7} />
