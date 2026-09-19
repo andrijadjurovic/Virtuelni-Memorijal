@@ -295,6 +295,9 @@ export default function CemeteryScene({ memorials, onSelect, resetCameraKey = 0,
       setFocusAnimating(false);
       setResetToDefault(true);
       controls.current?.reset();
+      const resetTimer = window.setTimeout(() => setResetToDefault(false), 900);
+      previousResetKey.current = resetCameraKey;
+      return () => window.clearTimeout(resetTimer);
     }
     previousResetKey.current = resetCameraKey;
   }, [resetCameraKey]);
