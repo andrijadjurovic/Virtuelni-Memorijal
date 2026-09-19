@@ -283,10 +283,14 @@ function WeatherEffects({ weather, detail = 1 }) {
 
 export default function CemeteryScene({ memorials, onSelect, selectedMemorial, weather = "sun" }) {
   const [focused, setFocused] = useState(null);
+  const controls = useRef();
   const [lowPower] = useState(() => typeof window !== "undefined" && (window.matchMedia("(max-width: 720px").matches || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4)));
   const detail = lowPower ? 0 : 1;
   useEffect(() => {
-    if (!selectedMemorial) setFocused(null);
+    if (!selectedMemorial) {
+      setFocused(null);
+      controls.current?.reset();
+    }
   }, [selectedMemorial]);
   return <Canvas shadows={!lowPower} dpr={lowPower ? 1 : [1, 1.5]} gl={{ antialias: !lowPower, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }} camera={{ position: [11, 8, 15], fov: 42 }} onPointerMissed={() => setFocused(null)} onCreated={({ gl, scene }) => { gl.setClearColor("#a8c5c1"); gl.shadowMap.type = THREE.PCFSoftShadowMap; scene.fog = new THREE.Fog("#a8c5c1", 36, 86); }}>
     <fog attach="fog" args={[weather === "fog" ? "#a9b7b2" : weather === "storm" ? "#53636a" : "#a8c5c1", weather === "fog" ? 8 : 36, weather === "fog" ? 42 : 86]} />
@@ -300,6 +304,6 @@ export default function CemeteryScene({ memorials, onSelect, selectedMemorial, w
     <WeatherEffects weather={weather} detail={detail} />
     {memorials.map((memorial) => <Headstone key={memorial.id} memorial={memorial} activeGifts={memorial.gifts.filter((gift) => new Date(gift.activeUntil) > new Date())} onSelect={(item) => { setFocused(item); onSelect(item); }} />)}
     <CameraFocus target={focused} />
-    <OrbitControls enablePan enableDamping dampingFactor={0.08} maxPolarAngle={Math.PI / 2.15} minDistance={5} maxDistance={34} target={[0, 1, 0]} />
+    <OrbitControls ref={controls} enabled={!focused} enablePan enableDamping dampingFactor={0.08} maxPolarAngle={Math.PI / 2.15} minDistance={5} maxDistance={34} target={[0, 1, 0]} />
   </Canvas>;
 }
