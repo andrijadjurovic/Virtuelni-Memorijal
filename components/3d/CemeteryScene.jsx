@@ -248,8 +248,8 @@ function CameraFocus({ target }) {
 
   useFrame(() => {
     if (!target) return;
-    goal.current.set(target.x, 2.35, target.z + 5.8);
-    lookTarget.current.set(target.x, 0.95, target.z - 0.15);
+    goal.current.set(target.x, 2.35, target.z - 5.8);
+    lookTarget.current.set(target.x, 0.95, target.z + 0.15);
 
     camera.position.lerp(goal.current, 0.05);
     camera.lookAt(lookTarget.current);
