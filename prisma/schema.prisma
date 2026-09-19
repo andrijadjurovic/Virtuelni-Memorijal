@@ -8,24 +8,28 @@ datasource db {
 }
 
 model User {
-  id          String      @id @default(cuid())
-  email       String      @unique
-  name        String?
-  role        String      @default("OWNER")
-  createdAt   DateTime    @default(now())
-  memorials   Memorial[]  @relation("MemorialOwner")
-  approved    Condolence[] @relation("ApprovedBy")
+  id         String       @id @default(cuid())
+  email      String       @unique
+  authUserId String?      @unique
+  name       String?
+  role       String       @default("OWNER")
+  createdAt  DateTime     @default(now())
+  memorials  Memorial[]   @relation("MemorialOwner")
+  approved   Condolence[] @relation("ApprovedBy")
+  family     Family?
 }
 
 model Family {
-  id          String      @id @default(cuid())
-  name        String
-  createdAt   DateTime    @default(now())
-  memorials   Memorial[]
+  id        String     @id @default(cuid())
+  name      String
+  ownerId   String?    @unique
+  createdAt DateTime   @default(now())
+  owner     User?      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  memorials Memorial[]
 }
 
 model Memorial {
-  id            String          @id @default(cuid())
+  id            String            @id @default(cuid())
   ownerId       String?
   familyId      String?
   name          String
@@ -34,22 +38,22 @@ model Memorial {
   bio           String?
   photoUrl      String?
   audioUrl      String?
-  headstoneType String          @default("classic")
-  privacy       String          @default("PUBLIC")
+  headstoneType String            @default("classic")
+  privacy       String            @default("PUBLIC")
   pinCode       String?
-  isPet         Boolean         @default(false)
-  positionX     Float           @default(0)
-  positionY     Float           @default(0)
-  positionZ     Float           @default(0)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  owner         User?           @relation("MemorialOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  family        Family?         @relation(fields: [familyId], references: [id], onDelete: SetNull)
+  isPet         Boolean           @default(false)
+  positionX     Float             @default(0)
+  positionY     Float             @default(0)
+  positionZ     Float             @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  owner         User?             @relation("MemorialOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  family        Family?           @relation(fields: [familyId], references: [id], onDelete: SetNull)
   timeline      TimelineEvent[]
   gifts         GiftTransaction[]
-  condolences  Condolence[]
-  relationsFrom FamilyRelation[] @relation("RelationFrom")
-  relationsTo   FamilyRelation[] @relation("RelationTo")
+  condolences   Condolence[]
+  relationsFrom FamilyRelation[]  @relation("RelationFrom")
+  relationsTo   FamilyRelation[]  @relation("RelationTo")
 
   @@index([positionX, positionZ])
   @@index([familyId])
@@ -68,40 +72,40 @@ model TimelineEvent {
 }
 
 model GiftTransaction {
-  id            String   @id @default(cuid())
-  memorialId    String
-  giftType      String
-  stripeSessionId String? @unique
-  purchasedAt   DateTime @default(now())
-  activeUntil   DateTime
-  amount        Int
-  currency      String   @default("eur")
-  memorial      Memorial @relation(fields: [memorialId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  memorialId      String
+  giftType        String
+  stripeSessionId String?  @unique
+  purchasedAt     DateTime @default(now())
+  activeUntil     DateTime
+  amount          Int
+  currency        String   @default("eur")
+  memorial        Memorial @relation(fields: [memorialId], references: [id], onDelete: Cascade)
 
   @@index([memorialId, activeUntil])
 }
 
 model Condolence {
-  id          String           @id @default(cuid())
-  memorialId  String
-  authorName  String
-  content     String
-  status      String           @default("PENDING")
+  id           String   @id @default(cuid())
+  memorialId   String
+  authorName   String
+  content      String
+  status       String   @default("PENDING")
   approvedById String?
-  createdAt   DateTime         @default(now())
-  memorial    Memorial         @relation(fields: [memorialId], references: [id], onDelete: Cascade)
-  approvedBy  User?            @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  memorial     Memorial @relation(fields: [memorialId], references: [id], onDelete: Cascade)
+  approvedBy   User?    @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
 
   @@index([memorialId, status])
 }
 
 model FamilyRelation {
-  id           String   @id @default(cuid())
+  id             String   @id @default(cuid())
   fromMemorialId String
-  toMemorialId String
-  relationType String
-  fromMemorial Memorial @relation("RelationFrom", fields: [fromMemorialId], references: [id], onDelete: Cascade)
-  toMemorial   Memorial @relation("RelationTo", fields: [toMemorialId], references: [id], onDelete: Cascade)
+  toMemorialId   String
+  relationType   String
+  fromMemorial   Memorial @relation("RelationFrom", fields: [fromMemorialId], references: [id], onDelete: Cascade)
+  toMemorial     Memorial @relation("RelationTo", fields: [toMemorialId], references: [id], onDelete: Cascade)
 
   @@unique([fromMemorialId, toMemorialId])
 }

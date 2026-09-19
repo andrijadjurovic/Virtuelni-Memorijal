@@ -20,6 +20,13 @@ export async function POST(request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
+    if (session.metadata?.productType === "MEMORIAL") {
+      await prisma.memorial.updateMany({
+        where: { id: session.metadata.memorialId, familyId: session.metadata.familyId, privacy: "PENDING" },
+        data: { privacy: "PRIVATE" },
+      });
+      return NextResponse.json({ received: true });
+    }
     const days = Number(session.metadata?.activeDays ?? 2);
     const activeUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     await prisma.giftTransaction.create({

@@ -14,6 +14,37 @@ function seededScatter(count, seed, spread = 36) {
   });
 }
 
+function terrainHeight(x, z) {
+  const localY = -z;
+  const contour = Math.sin(x * 0.42) * 0.34 + Math.cos(localY * 0.36) * 0.28 + Math.sin((x + localY) * 0.18) * 0.24;
+  const mound = Math.max(0, 1 - (Math.abs(x) + Math.abs(localY)) / 58) * 0.22;
+  return contour + mound;
+}
+
+function isPathPosition(x, z) {
+  const verticalPath = [-28, -20, -12, 12, 20, 28].some((pathX) => Math.abs(x - pathX) < 1.35);
+  const horizontalPath = [-28, -18, 18, 28].some((pathZ) => Math.abs(z - pathZ) < 1.35);
+  return verticalPath || horizontalPath || Math.abs(x) < 1.35 || Math.abs(z) < 1.35;
+}
+
+function scatterWithoutCollisions(count, seed, spread, minDistance, blockedPositions = [], canPlace = () => true) {
+  const positions = [];
+  const candidates = seededScatter(count * 8, seed, spread);
+
+  for (const candidate of candidates) {
+    if (!canPlace(candidate[0], candidate[1])) continue;
+    const isBlocked = [...blockedPositions, ...positions].some(([x, z, radius = 0]) => {
+      const distance = Math.hypot(candidate[0] - x, candidate[1] - z);
+      return distance < minDistance + radius;
+    });
+
+    if (!isBlocked) positions.push(candidate);
+    if (positions.length === count) break;
+  }
+
+  return positions;
+}
+
 function createTerrainGeometry() {
   const geometry = new THREE.PlaneGeometry(90, 90, 80, 80);
   const position = geometry.attributes.position;
@@ -21,16 +52,14 @@ function createTerrainGeometry() {
   for (let index = 0; index < position.count; index += 1) {
     const x = position.getX(index);
     const y = position.getY(index);
-    const contour = Math.sin(x * 0.42) * 0.34 + Math.cos(y * 0.36) * 0.28 + Math.sin((x + y) * 0.18) * 0.24;
-    const mound = Math.max(0, 1 - (Math.abs(x) + Math.abs(y)) / 58) * 0.22;
-    position.setZ(index, contour + mound);
+    position.setZ(index, terrainHeight(x, -y));
   }
 
   geometry.computeVertexNormals();
   return geometry;
 }
 
-function Terrain({ weather, detail = 1 }) {
+function Terrain({ weather, detail = 1, memorials }) {
   const counts = {
     patches: detail === 1 ? 42 : 20,
     rocks: detail === 1 ? 28 : 14,
@@ -38,16 +67,40 @@ function Terrain({ weather, detail = 1 }) {
     trees: detail === 1 ? 64 : 30,
     shrubs: detail === 1 ? 20 : 10,
     stones: detail === 1 ? 22 : 10,
-    grass: detail === 1 ? 75 : 28,
+    grass: detail === 1 ? 132 : 52,
   };
 
   const terrainGeometry = useMemo(() => createTerrainGeometry(), []);
-  const soilPatches = useMemo(() => seededScatter(28, 11, 40), []);
+  const layout = useMemo(() => {
+    const memorialPositions = memorials.map(({ x, z }) => [x, z, 1.8]);
+    const fixedPositions = [[0, 0, 3.8], [26, 26, 3], [0, -37, 4]];
+    const reserved = [...memorialPositions, ...fixedPositions];
+    const trees = scatterWithoutCollisions(counts.trees, 6, 38, 4.4, reserved);
+    const shrubs = scatterWithoutCollisions(counts.shrubs, 7, 35, 2.2, [...reserved, ...trees.map(([x, z]) => [x, z, 2.8])]);
+    const rocks = scatterWithoutCollisions(counts.rocks, 3, 37, 1.25, [...reserved, ...trees.map(([x, z]) => [x, z, 2.8]), ...shrubs.map(([x, z]) => [x, z, 1.1])]);
+    const beds = scatterWithoutCollisions(counts.beds, 4, 28, 1.8, [...reserved, ...trees.map(([x, z]) => [x, z, 2.8]), ...shrubs.map(([x, z]) => [x, z, 1.1]), ...rocks.map(([x, z]) => [x, z, 0.8])]);
+    const vegetationBlocked = [...reserved, ...trees.map(([x, z]) => [x, z, 2.8]), ...shrubs.map(([x, z]) => [x, z, 1.1]), ...rocks.map(([x, z]) => [x, z, 0.8])];
+    const groundCover = scatterWithoutCollisions(detail === 1 ? 96 : 38, 12, 39, 0.75, vegetationBlocked, (x, z) => !isPathPosition(x, z));
+
+    return {
+      soilPatches: seededScatter(28, 11, 40),
+      trees,
+      shrubs,
+      rocks,
+      beds,
+      stones: scatterWithoutCollisions(counts.stones, 8, 27, 2, [...reserved, ...trees.map(([x, z]) => [x, z, 2.8]), ...shrubs.map(([x, z]) => [x, z, 1.1])]),
+      grass: scatterWithoutCollisions(counts.grass, 9, 39, 0.55, [...vegetationBlocked, ...groundCover.map(([x, z]) => [x, z, 0.7])], (x, z) => !isPathPosition(x, z)),
+      groundCover,
+    };
+  }, [counts.beds, counts.grass, counts.rocks, counts.shrubs, counts.stones, counts.trees, detail, memorials]);
 
   return (
     <group>
       <mesh geometry={terrainGeometry} rotation-x={-Math.PI / 2} receiveShadow>
-        <meshStandardMaterial color="#2e4d39" roughness={1} />
+        <meshStandardMaterial color="#263f30" roughness={1} />
+      </mesh>
+      <mesh geometry={terrainGeometry} rotation-x={-Math.PI / 2} position-y={0.035} receiveShadow>
+        <meshStandardMaterial color="#416b43" roughness={0.98} />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position-y={0.012} receiveShadow>
         <planeGeometry args={[7, 90]} />
@@ -57,8 +110,8 @@ function Terrain({ weather, detail = 1 }) {
         <planeGeometry args={[90, 7]} />
         <meshStandardMaterial color="#c5b89b" roughness={0.9} />
       </mesh>
-      {soilPatches.map(([x, z], index) => (
-        <mesh key={`soil-${index}`} position={[x, 0.028 + (index % 3) * 0.009, z]} rotation-x={-Math.PI / 2} scale={0.9 + (index % 4) * 0.25} receiveShadow>
+      {layout.soilPatches.map(([x, z], index) => (
+        <mesh key={`soil-${index}`} position={[x, terrainHeight(x, z) + 0.035 + (index % 3) * 0.009, z]} rotation-x={-Math.PI / 2} scale={0.9 + (index % 4) * 0.25} receiveShadow>
           <circleGeometry args={[1.2, 16]} />
           <meshStandardMaterial color={index % 3 === 0 ? "#4c684d" : index % 3 === 1 ? "#5e7857" : "#49684a"} roughness={1} />
         </mesh>
@@ -68,21 +121,23 @@ function Terrain({ weather, detail = 1 }) {
       {[-28, -18, 18, 28].flatMap((z) => [-40, -30, -20, -10, 0, 10, 20, 30, 40].map((x) => <PathTile key={`tile-z-${z}-${x}`} position={[x, 0.035, z]} rotation-y={Math.PI / 2} />))}
       {[-28, -20, -12, 12, 20, 28].flatMap((x) => [-35, -25, -15, -5, 5, 15, 25, 35].map((z) => <PathTile key={`tile-x-${x}-${z}`} position={[x, 0.036, z]} />))}
       {[-32, -22, -12, 12, 22, 32].flatMap((x) => [-27, -17, 17, 27].map((z) => <PathBorder key={`border-${x}-${z}`} position={[x, 0.08, z]} rotation-y={Math.abs(x) % 2 ? Math.PI / 2 : 0} />))}
-      {seededScatter(counts.patches, 2, 38).map(([x, z], index) => <GroundPatch key={`patch-${index}`} position={[x, 0.025, z]} scale={0.7 + (index % 4) * 0.22} />)}
-      {seededScatter(counts.rocks, 3, 37).map(([x, z], index) => <GroundRock key={`rock-${index}`} position={[x, 0.05, z]} scale={0.5 + (index % 3) * 0.2} />)}
-      {seededScatter(counts.beds, 4, 28).map(([x, z], index) => <FlowerBed key={`bed-${index}`} position={[x, 0.04, z]} />)}
-      {(weather === "rain" || weather === "storm") && seededScatter(detail === 1 ? 18 : 8, 5, 30).map(([x, z], index) => <Puddle key={`puddle-${index}`} position={[x, 0.025, z]} scale={0.5 + (index % 3) * 0.25} />)}
+      {seededScatter(counts.patches, 2, 38).map(([x, z], index) => <GroundPatch key={`patch-${index}`} position={[x, terrainHeight(x, z) + 0.035, z]} scale={0.7 + (index % 4) * 0.22} />)}
+      {layout.rocks.map(([x, z], index) => <GroundRock key={`rock-${index}`} position={[x, terrainHeight(x, z) + 0.22, z]} scale={0.5 + (index % 3) * 0.2} />)}
+      {layout.beds.map(([x, z], index) => <FlowerBed key={`bed-${index}`} position={[x, terrainHeight(x, z) + 0.05, z]} />)}
+      {(weather === "rain" || weather === "storm") && seededScatter(detail === 1 ? 18 : 8, 5, 30).map(([x, z], index) => <Puddle key={`puddle-${index}`} position={[x, terrainHeight(x, z) + 0.035, z]} scale={0.5 + (index % 3) * 0.25} />)}
       <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[7, 8, 48]} /><meshStandardMaterial color="#b5a484" roughness={1} /></mesh>
-      {seededScatter(counts.trees, 6, 38).map(([x, z], index) => <Tree key={`tree-${index}`} position={[x, 0, z]} scale={0.7 + (index % 4) * 0.12} />)}
-      {seededScatter(counts.shrubs, 7, 35).map(([x, z], index) => <Shrub key={`shrub-${index}`} position={[x, 0, z]} />)}
-      {seededScatter(counts.stones, 8, 27).map(([x, z], index) => <AmbientStone key={`stone-${index}`} position={[x, 0, z]} rotation={Math.sin(index * 2.4) * 0.35} />)}
-      {seededScatter(counts.grass, 9, 39).map(([x, z], index) => <GrassTuft key={`grass-${index}`} position={[x, 0.02, z]} />)}
-      <Entrance />
-      <Gazebo position={[26, 0, 26]} />
-      <Fountain />
-      {[-14, -7, 7, 14].map((x) => <Bench key={`bench-${x}`} position={[x, 0, 12]} rotation={[0, 0, x > 0 ? 0.04 : -0.04]} />)}
-      {[-24, -12, 0, 12, 24].map((x) => <Lantern key={`lantern-a-${x}`} position={[x, 0, -6]} />)}
-      {[-24, -12, 0, 12, 24].map((x) => <Lantern key={`lantern-b-${x}`} position={[x, 0, 6]} />)}
+      {layout.trees.map(([x, z], index) => <Tree key={`tree-${index}`} position={[x, terrainHeight(x, z), z]} scale={0.7 + (index % 4) * 0.12} />)}
+      {layout.shrubs.map(([x, z], index) => <Shrub key={`shrub-${index}`} position={[x, terrainHeight(x, z), z]} />)}
+      {layout.stones.map(([x, z], index) => <AmbientStone key={`stone-${index}`} position={[x, terrainHeight(x, z), z]} rotation={Math.sin(index * 2.4) * 0.35} />)}
+      {layout.groundCover.map(([x, z], index) => <GroundFoliage key={`cover-${index}`} position={[x, terrainHeight(x, z) + 0.12, z]} scale={0.7 + (index % 4) * 0.12} />)}
+      {layout.grass.map(([x, z], index) => <GrassTuft key={`grass-${index}`} position={[x, terrainHeight(x, z) + 0.12, z]} />)}
+      <Entrance position={[0, terrainHeight(0, -37), -37]} />
+      <ParkBoundary />
+      <Gazebo position={[26, terrainHeight(26, 26), 26]} />
+      <Fountain position={[0, terrainHeight(0, 0) + 0.1, 0]} />
+      {[-14, -7, 7, 14].map((x) => <Bench key={`bench-${x}`} position={[x, terrainHeight(x, 12), 12]} rotation={[0, 0, x > 0 ? 0.04 : -0.04]} />)}
+      {[-24, -12, 0, 12, 24].map((x) => <Lantern key={`lantern-a-${x}`} position={[x, terrainHeight(x, -6), -6]} />)}
+      {[-24, -12, 0, 12, 24].map((x) => <Lantern key={`lantern-b-${x}`} position={[x, terrainHeight(x, 6), 6]} />)}
     </group>
   );
 }
@@ -93,6 +148,37 @@ function PathTile({ position, rotation }) {
 
 function PathBorder({ position, rotation }) {
   return <mesh position={position} rotation-y={rotation} castShadow><boxGeometry args={[0.22, 0.18, 2.4]} /><meshStandardMaterial color="#6d7564" roughness={0.95} /></mesh>;
+}
+
+function ParkBoundary() {
+  const posts = Array.from({ length: 17 }, (_, index) => -48 + index * 6);
+  return <group>
+    {posts.flatMap((offset) => [
+      <BoundaryPost key={`north-${offset}`} position={[offset, terrainHeight(offset, -47) + 1.1, -47]} />,
+      <BoundaryPost key={`south-${offset}`} position={[offset, terrainHeight(offset, 47) + 1.1, 47]} />,
+      <BoundaryPost key={`west-${offset}`} position={[-47, terrainHeight(-47, offset) + 1.1, offset]} rotation-y={Math.PI / 2} />,
+      <BoundaryPost key={`east-${offset}`} position={[47, terrainHeight(47, offset) + 1.1, offset]} rotation-y={Math.PI / 2} />,
+    ])}
+    <BoundaryRail position={[0, terrainHeight(0, -47) + 1.35, -47]} />
+    <BoundaryRail position={[0, terrainHeight(0, 47) + 1.35, 47]} />
+    <BoundaryRail position={[-47, terrainHeight(-47, 0) + 1.35, 0]} rotation-y={Math.PI / 2} />
+    <BoundaryRail position={[47, terrainHeight(47, 0) + 1.35, 0]} rotation-y={Math.PI / 2} />
+    <BoundaryRail position={[0, terrainHeight(0, -47) + 0.72, -47]} />
+    <BoundaryRail position={[0, terrainHeight(0, 47) + 0.72, 47]} />
+    <BoundaryRail position={[-47, terrainHeight(-47, 0) + 0.72, 0]} rotation-y={Math.PI / 2} />
+    <BoundaryRail position={[47, terrainHeight(47, 0) + 0.72, 0]} rotation-y={Math.PI / 2} />
+  </group>;
+}
+
+function BoundaryPost({ position, rotation }) {
+  return <group position={position} rotation-y={rotation}>
+    <mesh castShadow><cylinderGeometry args={[0.12, 0.16, 2.2, 8]} /><meshStandardMaterial color="#4a382a" roughness={0.95} /></mesh>
+    <mesh position-y={1.12} castShadow><sphereGeometry args={[0.17, 8, 6]} /><meshStandardMaterial color="#65764d" roughness={1} /></mesh>
+  </group>;
+}
+
+function BoundaryRail({ position, rotation }) {
+  return <mesh position={position} rotation-y={rotation} castShadow><boxGeometry args={[96, 0.13, 0.16]} /><meshStandardMaterial color="#72533a" roughness={0.9} /></mesh>;
 }
 
 function GroundPatch({ position, scale }) {
@@ -112,7 +198,23 @@ function Puddle({ position, scale }) {
 }
 
 function GrassTuft({ position }) {
-  return <group position={position} rotation-y={(position[0] + position[2]) % 3}><mesh rotation-z={-0.25} position-x={-0.06}><coneGeometry args={[0.025, 0.32, 4]} /><meshStandardMaterial color="#608054" /></mesh><mesh rotation-z={0.25} position-x={0.06}><coneGeometry args={[0.025, 0.27, 4]} /><meshStandardMaterial color="#78935c" /></mesh></group>;
+  return <group position={position} rotation-y={(position[0] + position[2]) % 3}>
+    <mesh position-y={0.055} scale={[0.38, 0.12, 0.28]}><sphereGeometry args={[1, 8, 5]} /><meshStandardMaterial color="#3f6845" roughness={1} /></mesh>
+    {[-0.16, -0.08, 0, 0.1, 0.18].map((offset, index) => <mesh key={index} position={[offset, 0.19 + (index % 2) * 0.035, (index % 2 ? 0.07 : -0.06)]} rotation={[0, (index - 2) * 0.28, (index - 2) * 0.16]}>
+      <coneGeometry args={[0.035, 0.38 + (index % 3) * 0.08, 4]} />
+      <meshStandardMaterial color={index % 2 ? "#6f9656" : "#4e7d4e"} roughness={1} />
+    </mesh>)}
+  </group>;
+}
+
+function GroundFoliage({ position, scale = 1 }) {
+  return <group position={position} scale={scale} rotation-y={(position[0] * 0.7 + position[2]) % 3}>
+    <mesh position-y={0.06} scale={[0.52, 0.12, 0.38]}><sphereGeometry args={[1, 10, 6]} /><meshStandardMaterial color="#315c3d" roughness={1} /></mesh>
+    {[-1, 0, 1].map((offset, index) => <mesh key={index} position={[offset * 0.18, 0.16 + index * 0.025, index === 1 ? 0.05 : -0.06]} rotation={[0.2, offset * 0.5, offset * 0.35]} scale={[0.16, 0.42, 0.045]}>
+      <sphereGeometry args={[1, 8, 5]} />
+      <meshStandardMaterial color={index === 1 ? "#739b5b" : "#527f4c"} roughness={1} />
+    </mesh>)}
+  </group>;
 }
 
 function Tree({ position, scale = 1 }) {
@@ -171,12 +273,12 @@ function Bench({ position, rotation }) {
   return <group position={position} rotation={rotation}><RoundedBox position-y={0.65} args={[2.4, 0.14, 0.42]} radius={0.04} smoothness={3} castShadow><meshStandardMaterial color="#75533c" roughness={0.7} /></RoundedBox><RoundedBox position-y={0.96} rotation-x={-0.18} args={[2.4, 0.75, 0.14]} radius={0.04} smoothness={3} castShadow><meshStandardMaterial color="#75533c" roughness={0.7} /></RoundedBox><mesh position={[-0.85, 0.3, 0]}><boxGeometry args={[0.12, 0.65, 0.32]} /><meshStandardMaterial color="#46594b" metalness={0.35} /></mesh><mesh position={[0.85, 0.3, 0]}><boxGeometry args={[0.12, 0.65, 0.32]} /><meshStandardMaterial color="#46594b" metalness={0.35} /></mesh><mesh position-y={0.38}><boxGeometry args={[1.8, 0.035, 0.5]} /><meshStandardMaterial color="#b28a61" /></mesh></group>;
 }
 
-function Fountain() {
-  return <group position={[0, 0.1, 0]}><mesh castShadow><cylinderGeometry args={[3.5, 3.7, 0.35, 32]} /><meshStandardMaterial color="#817d73" roughness={0.88} metalness={0.08} /></mesh><mesh position-y={0.25}><cylinderGeometry args={[2.9, 3, 0.12, 32]} /><meshPhysicalMaterial color="#659294" metalness={0.15} roughness={0.08} transmission={0.12} clearcoat={0.8} /></mesh><mesh position-y={1.2} castShadow><cylinderGeometry args={[0.32, 0.45, 2, 16]} /><meshStandardMaterial color="#9e9b91" roughness={0.82} /></mesh><mesh position-y={2.25}><sphereGeometry args={[0.35, 16, 10]} /><meshStandardMaterial color="#759b9b" roughness={0.25} /></mesh>{[0, 1, 2, 3].map((index) => <mesh key={index} position={[Math.cos(index * 1.57) * 0.6, 1.3, Math.sin(index * 1.57) * 0.6]} rotation-x={Math.PI / 2}><torusGeometry args={[0.08, 0.025, 6, 12]} /><meshStandardMaterial color="#82b3b0" emissive="#609d9c" emissiveIntensity={0.4} /></mesh>)}<pointLight position-y={1} color="#9ad2d0" intensity={0.35} distance={8} /></group>;
+function Fountain({ position }) {
+  return <group position={position}><mesh castShadow><cylinderGeometry args={[3.5, 3.7, 0.35, 32]} /><meshStandardMaterial color="#817d73" roughness={0.88} metalness={0.08} /></mesh><mesh position-y={0.25}><cylinderGeometry args={[2.9, 3, 0.12, 32]} /><meshPhysicalMaterial color="#659294" metalness={0.15} roughness={0.08} transmission={0.12} clearcoat={0.8} /></mesh><mesh position-y={1.2} castShadow><cylinderGeometry args={[0.32, 0.45, 2, 16]} /><meshStandardMaterial color="#9e9b91" roughness={0.82} /></mesh><mesh position-y={2.25}><sphereGeometry args={[0.35, 16, 10]} /><meshStandardMaterial color="#759b9b" roughness={0.25} /></mesh>{[0, 1, 2, 3].map((index) => <mesh key={index} position={[Math.cos(index * 1.57) * 0.6, 1.3, Math.sin(index * 1.57) * 0.6]} rotation-x={Math.PI / 2}><torusGeometry args={[0.08, 0.025, 6, 12]} /><meshStandardMaterial color="#82b3b0" emissive="#609d9c" emissiveIntensity={0.4} /></mesh>)}<pointLight position-y={1} color="#9ad2d0" intensity={0.35} distance={8} /></group>;
 }
 
-function Entrance() {
-  return <group position={[0, 0, -37]}><mesh position={[-3, 2.8, 0]} castShadow><boxGeometry args={[0.55, 5.6, 0.65]} /><meshStandardMaterial color="#7d7565" roughness={0.8} /></mesh><mesh position={[3, 2.8, 0]} castShadow><boxGeometry args={[0.55, 5.6, 0.65]} /><meshStandardMaterial color="#7d7565" roughness={0.8} /></mesh><RoundedBox position-y={5.3} args={[6.5, 0.55, 0.7]} radius={0.12} smoothness={4} castShadow><meshStandardMaterial color="#8e8067" roughness={0.75} /></RoundedBox><RoundedBox position-y={4.7} args={[4.8, 0.8, 0.1]} radius={0.04} smoothness={3}><meshStandardMaterial color="#d3bd86" emissive="#493d25" emissiveIntensity={0.2} /></RoundedBox><mesh position={[-2.1, 2.5, -0.38]} rotation-z={Math.PI / 2}><torusGeometry args={[0.65, 0.055, 8, 20]} /><meshStandardMaterial color="#b59660" metalness={0.7} roughness={0.28} /></mesh><mesh position={[2.1, 2.5, -0.38]} rotation-z={Math.PI / 2}><torusGeometry args={[0.65, 0.055, 8, 20]} /><meshStandardMaterial color="#b59660" metalness={0.7} roughness={0.28} /></mesh></group>;
+function Entrance({ position }) {
+  return <group position={position}><mesh position={[-3, 2.8, 0]} castShadow><boxGeometry args={[0.55, 5.6, 0.65]} /><meshStandardMaterial color="#7d7565" roughness={0.8} /></mesh><mesh position={[3, 2.8, 0]} castShadow><boxGeometry args={[0.55, 5.6, 0.65]} /><meshStandardMaterial color="#7d7565" roughness={0.8} /></mesh><RoundedBox position-y={5.3} args={[6.5, 0.55, 0.7]} radius={0.12} smoothness={4} castShadow><meshStandardMaterial color="#8e8067" roughness={0.75} /></RoundedBox><RoundedBox position-y={4.7} args={[4.8, 0.8, 0.1]} radius={0.04} smoothness={3}><meshStandardMaterial color="#d3bd86" emissive="#493d25" emissiveIntensity={0.2} /></RoundedBox><mesh position={[-2.1, 2.5, -0.38]} rotation-z={Math.PI / 2}><torusGeometry args={[0.65, 0.055, 8, 20]} /><meshStandardMaterial color="#b59660" metalness={0.7} roughness={0.28} /></mesh><mesh position={[2.1, 2.5, -0.38]} rotation-z={Math.PI / 2}><torusGeometry args={[0.65, 0.055, 8, 20]} /><meshStandardMaterial color="#b59660" metalness={0.7} roughness={0.28} /></mesh></group>;
 }
 
 function Gazebo({ position }) {
@@ -230,7 +332,7 @@ function MonumentTrim() {
 
 function Headstone({ memorial, activeGifts, onSelect }) {
   const [hovered, setHovered] = useState(false);
-  const position = [memorial.x, 0, memorial.z];
+  const position = [memorial.x, terrainHeight(memorial.x, memorial.z), memorial.z];
   const stoneColor = memorial.isPet ? "#98765f" : hovered ? "#d8c8a8" : "#aaa391";
   return <group position={position} onClick={(event) => { event.stopPropagation(); onSelect(memorial); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
     <mesh position={[0, 0.12, 0.4]} rotation-x={-Math.PI / 2} receiveShadow><circleGeometry args={[1.25, 24]} /><meshStandardMaterial color="#5f7956" /></mesh>
@@ -302,7 +404,7 @@ export default function CemeteryScene({ memorials, onSelect, resetCameraKey = 0,
     <hemisphereLight color="#dcebe1" groundColor="#304b38" intensity={weather === "storm" ? 0.42 : 0.7} />
     <directionalLight castShadow position={[-12, 18, -10]} intensity={weather === "storm" ? 0.75 : weather === "fog" ? 1.1 : 2.4} color={weather === "storm" ? "#b8c7db" : "#fff0c5"} shadow-mapSize={[2048, 2048]} shadow-bias={-0.0002} />
     <Sky sunPosition={[-4, 5, -10]} turbidity={weather === "fog" ? 12 : weather === "storm" ? 18 : 5} rayleigh={weather === "fog" ? 2.5 : 1.8} mieCoefficient={weather === "fog" ? 0.08 : 0.015} />
-    <Terrain weather={weather} detail={detail} />
+    <Terrain weather={weather} detail={detail} memorials={memorials} />
     {!lowPower && <ContactShadows position={[0, 0.02, 0]} opacity={weather === "storm" ? 0.5 : 0.34} scale={70} blur={2.6} far={18} resolution={1024} />}
     {!lowPower && <EffectComposer multisampling={4}><Bloom luminanceThreshold={1.1} intensity={weather === "storm" ? 0.35 : 0.55} mipmapBlur /><Noise opacity={0.018} /><Vignette eskil={false} offset={0.18} darkness={0.52} /></EffectComposer>}
     <WeatherEffects weather={weather} detail={detail} />

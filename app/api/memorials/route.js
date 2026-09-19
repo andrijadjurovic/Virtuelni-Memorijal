@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -36,11 +37,13 @@ function serializeMemorial(memorial) {
 }
 
 export async function GET() {
-  if (!process.env.DATABASE_URL && !process.env.TURSO_DATABASE_URL) return NextResponse.json({ memorials: [], source: "demo" });
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Morate biti prijavljeni." }, { status: 401 });
+  if (!process.env.DATABASE_URL && !process.env.TURSO_DATABASE_URL) return NextResponse.json({ memorials: [], source: "empty" });
 
   try {
     const memorials = await prisma.memorial.findMany({
-      where: { privacy: "PUBLIC" },
+      where: { familyId: user.family.id, privacy: "PRIVATE" },
       include: {
         timeline: { orderBy: { year: "asc" } },
         gifts: { where: { activeUntil: { gt: new Date() } }, orderBy: { activeUntil: "desc" } },
@@ -56,23 +59,9 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const name = body.name?.trim();
-    if (!name) return NextResponse.json({ error: "Ime memorijala je obavezno." }, { status: 400 });
-
-    const memorial = await prisma.memorial.create({
-      data: {
-        name,
-        bio: body.bio?.trim() || null,
-        birthDate: body.birthDate ? new Date(`${body.birthDate}T00:00:00.000Z`) : null,
-        deathDate: body.deathDate ? new Date(`${body.deathDate}T00:00:00.000Z`) : null,
-        isPet: Boolean(body.isPet),
-        privacy: "PUBLIC",
-        positionX: Number(body.positionX) || 0,
-        positionZ: Number(body.positionZ) || 0,
-      },
-    });
-    return NextResponse.json({ memorial }, { status: 201 });
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Morate biti prijavljeni." }, { status: 401 });
+    return NextResponse.json({ error: "Memorijal se aktivira nakon plaćanja." }, { status: 402 });
   } catch (error) {
     console.error("Failed to create memorial", error);
     return NextResponse.json({ error: "Memorijal nije moguće sačuvati." }, { status: 500 });

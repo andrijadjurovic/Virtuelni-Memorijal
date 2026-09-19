@@ -28,14 +28,14 @@ const weatherOptions = [
 export default function Home() {
   const [selected, setSelected] = useState(null);
   const [resetCameraKey, setResetCameraKey] = useState(0);
-  const [liveMemorials, setLiveMemorials] = useState(memorials);
+  const [liveMemorials, setLiveMemorials] = useState([]);
   const [query, setQuery] = useState("");
   const [petOnly, setPetOnly] = useState(false);
   const [weather, setWeather] = useState("sun");
 
   useEffect(() => {
     fetch("/api/memorials").then((response) => response.json()).then((data) => {
-      if (data.memorials?.length) setLiveMemorials(data.memorials);
+      setLiveMemorials(data.memorials ?? []);
     }).catch(() => {});
   }, []);
 

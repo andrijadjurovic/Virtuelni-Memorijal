@@ -20,7 +20,9 @@ export async function proxy(request) {
     },
   });
 
-  await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  const protectedPath = request.nextUrl.pathname === "/" || request.nextUrl.pathname.startsWith("/dashboard");
+  if (protectedPath && !user) return NextResponse.redirect(new URL("/login", request.url));
   return response;
 }
 
