@@ -47,7 +47,7 @@ export default function Home() {
       <div className="top-actions"><span className="online"><i /> Park je otvoren</span><a className="profile-button" href="/dashboard">Moja porodica <span>JD</span></a></div>
     </header>
     <div className="park-stage">
-      <div className="scene-wrap"><CemeteryScene memorials={filteredMemorials} weather={weather} onSelect={setSelected} /></div>
+      <div className="scene-wrap"><CemeteryScene memorials={filteredMemorials} selectedMemorial={selected} weather={weather} onSelect={setSelected} /></div>
       <div className="stage-gradient" />
       <div className="stage-copy"><p className="eyebrow"><Sparkles size={13} /> Prostor za secanje</p><h1>Price koje<br /><em>ostaju.</em></h1><p>Prosetajte kroz park i posetite ljude<br className="desktop-only" /> koji su ostavili trag.</p></div>
       <div className="controls-hint"><span>↔</span> Prevuci za pogled <span>·</span> Klikni na spomenik</div>
