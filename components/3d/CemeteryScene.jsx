@@ -241,7 +241,7 @@ function Headstone({ memorial, activeGifts, onSelect }) {
   </group>;
 }
 
-function CameraFocus({ target }) {
+function CameraFocus({ target, controls }) {
   const { camera } = useThree();
   const goal = useRef(new THREE.Vector3());
   const lookTarget = useRef(new THREE.Vector3());
@@ -254,6 +254,10 @@ function CameraFocus({ target }) {
 
     camera.position.lerp(goal.current, 0.05);
     camera.lookAt(lookTarget.current);
+    if (controls.current) {
+      controls.current.target.set(target.x, 1, target.z);
+      controls.current.update();
+    }
   });
   return null;
 }
@@ -303,7 +307,7 @@ export default function CemeteryScene({ memorials, onSelect, resetCameraKey = 0,
     {!lowPower && <EffectComposer multisampling={4}><Bloom luminanceThreshold={1.1} intensity={weather === "storm" ? 0.35 : 0.55} mipmapBlur /><Noise opacity={0.018} /><Vignette eskil={false} offset={0.18} darkness={0.52} /></EffectComposer>}
     <WeatherEffects weather={weather} detail={detail} />
     {memorials.map((memorial) => <Headstone key={memorial.id} memorial={memorial} activeGifts={memorial.gifts.filter((gift) => new Date(gift.activeUntil) > new Date())} onSelect={(item) => { setFocused(item); setFocusAnimating(true); onSelect(item); }} />)}
-    <CameraFocus target={focusAnimating ? focused : null} />
+    <CameraFocus target={focusAnimating ? focused : null} controls={controls} />
     <OrbitControls ref={controls} onStart={() => setFocusAnimating(false)} enablePan enableDamping dampingFactor={0.08} maxPolarAngle={Math.PI / 2.15} minDistance={5} maxDistance={34} target={[0, 1, 0]} />
   </Canvas>;
 }
